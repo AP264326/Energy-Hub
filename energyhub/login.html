@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnergyHub — Accedi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent:#0EA5E9; --accent-h:#38BDF8; --green:#10B981;
+  --font-h:'Plus Jakarta Sans',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --tr:0.2s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --bg:#070B11; --s1:#0F1923; --s2:#162030; --s3:#1C2A3C;
+  --b1:rgba(255,255,255,0.07); --b2:rgba(255,255,255,0.12); --b3:rgba(255,255,255,0.2);
+  --t1:#F0F4FA; --t2:#9DB4CC; --t3:#6080A0;
+}
+[data-theme="light"] {
+  --bg:#F0F4FA; --s1:#FFFFFF; --s2:#F5F8FC; --s3:#EAF0F8;
+  --b1:rgba(0,0,0,0.08); --b2:rgba(0,0,0,0.13); --b3:rgba(0,0,0,0.22);
+  --t1:#0D1A2B; --t2:#2E4A65; --t3:#5A7A96;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box }
+html, body { height:100%; }
+body {
+  background:var(--bg);
+  color:var(--t1);
+  font-family:var(--font-h);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  overflow:hidden;
+  transition:background var(--tr), color var(--tr);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── BACKGROUND ── */
+.bg-grid {
+  position:fixed; inset:0; z-index:0;
+  background-image:
+    linear-gradient(var(--b1) 1px, transparent 1px),
+    linear-gradient(90deg, var(--b1) 1px, transparent 1px);
+  background-size:40px 40px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+}
+.bg-glow {
+  position:fixed; z-index:0;
+  width:600px; height:600px;
+  border-radius:50%;
+  filter:blur(120px);
+  opacity:0.12;
+  background:radial-gradient(circle, #0EA5E9, transparent 70%);
+  top:-100px; left:50%; transform:translateX(-50%);
+  animation:glowPulse 6s ease-in-out infinite;
+}
+.bg-glow2 {
+  position:fixed; z-index:0;
+  width:400px; height:400px;
+  border-radius:50%;
+  filter:blur(100px);
+  opacity:0.08;
+  background:radial-gradient(circle, #10B981, transparent 70%);
+  bottom:-80px; right:10%;
+  animation:glowPulse 8s ease-in-out infinite reverse;
+}
+@keyframes glowPulse { 0%,100%{opacity:0.10} 50%{opacity:0.18} }
+
+/* ticker at top */
+.top-ticker {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  height:32px;
+  background:var(--s1);
+  border-bottom:1px solid var(--b1);
+  display:flex; align-items:center;
+  overflow:hidden;
+}
+.ticker-track {
+  display:flex; gap:40px;
+  animation:tickerScroll 30s linear infinite;
+  white-space:nowrap;
+}
+@keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.tick-item {
+  display:flex; align-items:center; gap:6px;
+  font-family:var(--font-m); font-size:10.5px; color:var(--t3);
+}
+.tick-item strong { color:var(--t2); font-weight:500; }
+.tick-up { color:#10B981; }
+.tick-dn { color:#F43F5E; }
+
+/* ── CARD ── */
+.card-wrap {
+  position:relative; z-index:10;
+  width:100%; max-width:420px;
+  margin:0 16px;
+  animation:cardIn 0.5s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(24px) scale(0.98); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+
+.logo-row {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin-bottom:28px;
+}
+.logo-mark {
+  width:36px; height:36px;
+  background:rgba(14,165,233,0.12);
+  border:1px solid rgba(14,165,233,0.25);
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+}
+.logo-mark svg { width:18px; height:18px; }
+.logo-name {
+  font-size:20px; font-weight:700; letter-spacing:-0.3px; color:var(--t1);
+}
+.logo-name em { font-style:normal; color:var(--accent); }
+
+.card {
+  background:var(--s1);
+  border:1px solid var(--b1);
+  border-radius:20px;
+  padding:32px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.25), 0 0 0 1px var(--b1);
+}
+
+/* tabs */
+.tabs {
+  display:flex; gap:4px;
+  background:var(--s2);
+  border:1px solid var(--b1);
+  border-radius:12px;
+  padding:4px;
+  margin-bottom:28px;
+}
+.tab {
+  flex:1; text-align:center;
+  padding:8px;
+  border-radius:9px;
+  font-size:13.5px; font-weight:600;
+  cursor:pointer;
+  color:var(--t3);
+  transition:all var(--tr);
+  border:none; background:transparent;
+  font-family:var(--font-h);
+}
+.tab:hover { color:var(--t2); }
+.tab.active {
+  background:var(--s3);
+  color:var(--t1);
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* form */
+.form { display:flex; flex-direction:column; gap:14px; }
+.form-panel { display:none; }
+.form-panel.active { display:flex; flex-direction:column; gap:14px; }
+
+.field { display:flex; flex-direction:column; gap:6px; }
+.field label {
+  font-family:var(--font-m);
+  font-size:11px; letter-spacing:0.5px; text-transform:uppercase;
+  color:var(--t3); font-weight:500;
+}
+.field input {
+  background:var(--s2);
+  border:1px solid var(--b2);
+  border-radius:10px;
+  padding:11px 14px;
+  font-size:14px; color:var(--t1);
+  font-family:var(--font-h);
+  outline:none;
+  transition:all var(--tr);
+}
+.field input:focus {
+  border-color:var(--accent);
+  background:var(--s3);
+  box-shadow:0 0 0 3px rgba(14,165,233,0.1);
+}
+.field input::placeholder { color:var(--t3); }
+.field input.error { border-color:#F43F5E; }
+
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+.pw-wrap { position:relative; }
+.pw-wrap input { padding-right:42px; width:100%; }
+.pw-toggle {
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  background:none; border:none; cursor:pointer;
+  color:var(--t3); font-size:16px; padding:2px;
+  transition:color var(--tr);
+}
+.pw-toggle:hover { color:var(--t2); }
+
+/* password strength */
+.pw-strength { margin-top:6px; }
+.pw-bars { display:flex; gap:3px; margin-bottom:4px; }
+.pw-bar {
+  flex:1; height:3px; border-radius:2px;
+  background:var(--s3);
+  transition:background 0.3s;
+}
+.pw-bar.weak   { background:#F43F5E; }
+.pw-bar.medium { background:#F97316; }
+.pw-bar.strong { background:#10B981; }
+.pw-label { font-family:var(--font-m); font-size:10px; color:var(--t3); }
+
+/* remember / forgot */
+.form-meta {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:-4px;
+}
+.check-wrap {
+  display:flex; align-items:center; gap:7px;
+  cursor:pointer;
+}
+.check-wrap input[type=checkbox] {
+  width:15px; height:15px;
+  accent-color:var(--accent);
+  cursor:pointer;
+}
+.check-wrap span { font-size:12.5px; color:var(--t2); }
+.forgot-link {
+  font-family:var(--font-m); font-size:11px;
+  color:var(--accent); text-decoration:none;
+  transition:color var(--tr);
+}
+.forgot-link:hover { color:var(--accent-h); }
+
+/* submit */
+.submit-btn {
+  width:100%;
+  padding:13px;
+  background:var(--accent);
+  border:none; border-radius:10px;
+  color:#fff; font-size:14.5px; font-weight:700;
+  font-family:var(--font-h);
+  cursor:pointer;
+  transition:all var(--tr);
+  margin-top:4px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.submit-btn:hover { background:var(--accent-h); transform:translateY(-1px); box-shadow:0 8px 20px rgba(14,165,233,0.3); }
+.submit-btn:active { transform:translateY(0); }
+.submit-btn:disabled { background:var(--s3); color:var(--t3); cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; display:none; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* error / success messages */
+.msg-box {
+  padding:10px 14px;
+  border-radius:9px;
+  font-size:13px;
+  display:none;
+  align-items:center; gap:8px;
+  animation:msgIn 0.2s ease;
+}
+@keyframes msgIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+.msg-box.error   { background:rgba(244,63,94,0.1);  border:1px solid rgba(244,63,94,0.25);  color:#F43F5E; }
+.msg-box.success { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); color:#10B981; }
+.msg-box.show    { display:flex; }
+
+/* divider */
+.divider {
+  display:flex; align-items:center; gap:12px;
+  color:var(--t3); font-family:var(--font-m); font-size:10.5px;
+  margin:4px 0;
+}
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--b1); }
+
+/* social btns */
+.social-btns { display:flex; gap:8px; }
+.social-btn {
+  flex:1;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  padding:10px;
+  background:var(--s2); border:1px solid var(--b2); border-radius:10px;
+  color:var(--t2); font-size:13px; font-weight:500;
+  font-family:var(--font-h);
+  cursor:pointer; transition:all var(--tr);
+}
+.social-btn:hover { background:var(--s3); color:var(--t1); border-color:var(--b3); }
+.social-ico { font-size:16px; }
+
+/* plan selector */
+.plan-selector { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.plan-card {
+  padding:12px 14px;
+  background:var(--s2); border:1px solid var(--b2); border-radius:10px;
+  cursor:pointer; transition:all var(--tr);
+  position:relative;
+}
+.plan-card:hover { border-color:var(--b3); }
+.plan-card.selected { background:rgba(14,165,233,0.08); border-color:rgba(14,165,233,0.3); }
+.plan-card input[type=radio] { display:none; }
+.plan-name { font-size:13.5px; font-weight:700; color:var(--t1); margin-bottom:2px; }
+.plan-price { font-family:var(--font-m); font-size:11px; color:var(--t3); }
+.plan-badge {
+  position:absolute; top:8px; right:8px;
+  background:var(--accent); color:#fff;
+  font-family:var(--font-m); font-size:9px; font-weight:600;
+  padding:2px 6px; border-radius:100px;
+}
+
+/* footer note */
+.card-footer {
+  text-align:center;
+  margin-top:20px;
+  font-size:12px; color:var(--t3);
+  line-height:1.6;
+}
+.card-footer a { color:var(--accent); text-decoration:none; }
+.card-footer a:hover { color:var(--accent-h); }
+
+/* theme toggle */
+.theme-fab {
+  position:fixed; bottom:20px; right:20px; z-index:200;
+  width:38px; height:38px;
+  background:var(--s1); border:1px solid var(--b2); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
+  transition:all var(--tr);
+}
+.theme-fab:hover { transform:scale(1.1); }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow2"></div>
+
+<!-- Ticker -->
+<div class="top-ticker">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<div class="card-wrap" style="margin-top:32px">
+  <!-- Logo -->
+  <div class="logo-row">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="logo-name">Energy<em>Hub</em></div>
+  </div>
+
+  <div class="card">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" id="tabLogin" onclick="switchTab('login')">Accedi</button>
+      <button class="tab" id="tabRegister" onclick="switchTab('register')">Registrati</button>
+    </div>
+
+    <!-- LOGIN PANEL -->
+    <div class="form-panel active" id="panelLogin">
+      <div class="msg-box" id="loginMsg"></div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="mario@esempio.it" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="loginPw" placeholder="••••••••" autocomplete="current-password">
+          <button class="pw-toggle" onclick="togglePw('loginPw',this)">👁</button>
+        </div>
+      </div>
+
+      <div class="form-meta">
+        <label class="check-wrap">
+          <input type="checkbox" id="rememberMe">
+          <span>Ricordami</span>
+        </label>
+        <a href="#" class="forgot-link" onclick="showForgot()">Password dimenticata?</a>
+      </div>
+
+      <button class="submit-btn" id="loginBtn" onclick="doLogin()">
+        <div class="btn-spinner" id="loginSpinner"></div>
+        <span id="loginBtnText">Accedi →</span>
+      </button>
+
+      <div class="divider">oppure</div>
+
+      <div class="social-btns">
+        <button class="social-btn" onclick="socialLogin('Google')"><span class="social-ico">🔵</span> Google</button>
+        <button class="social-btn" onclick="socialLogin('Microsoft')"><span class="social-ico">⬛</span> Microsoft</button>
+      </div>
+
+      <!-- Demo access -->
+      <div style="text-align:center;margin-top:8px">
+        <button style="background:none;border:none;font-family:var(--font-m);font-size:11px;color:var(--t3);cursor:pointer;transition:color 0.2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--t3)'" onclick="demoLogin()">
+          ▶ Accesso demo (senza registrazione)
+        </button>
+      </div>
+    </div>
+
+    <!-- REGISTER PANEL -->
+    <div class="form-panel" id="panelRegister">
+      <div class="msg-box" id="registerMsg"></div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Nome</label>
+          <input type="text" id="regNome" placeholder="Mario">
+        </div>
+        <div class="field">
+          <label>Cognome</label>
+          <input type="text" id="regCognome" placeholder="Alberti">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Email aziendale</label>
+        <input type="email" id="regEmail" placeholder="mario@azienda.it">
+      </div>
+
+      <div class="field">
+        <label>Azienda</label>
+        <input type="text" id="regAzienda" placeholder="Nome azienda (opzionale)">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="regPw" placeholder="Min. 8 caratteri" oninput="checkStrength(this.value)">
+          <button class="pw-toggle" onclick="togglePw('regPw',this)">👁</button>
+        </div>
+        <div class="pw-strength">
+          <div class="pw-bars">
+            <div class="pw-bar" id="bar1"></div>
+            <div class="pw-bar" id="bar2"></div>
+            <div class="pw-bar" id="bar3"></div>
+            <div class="pw-bar" id="bar4"></div>
+          </div>
+          <div class="pw-label" id="pwLabel">Inserisci una password</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Piano</label>
+        <div class="plan-selector">
+          <label class="plan-card selected" id="planFree">
+            <input type="radio" name="plan" value="free" checked>
+            <div class="plan-name">Free</div>
+            <div class="plan-price">€0 / mese</div>
+          </label>
+          <label class="plan-card" id="planPro">
+            <input type="radio" name="plan" value="pro">
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">€49 / mese</div>
+            <div class="plan-badge">Popular</div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-meta" style="margin-top:-4px">
+        <label class="check-wrap">
+          <input type="checkbox" id="acceptTerms">
+          <span>Accetto i <a href="#" style="color:var(--accent)">Termini di Servizio</a></span>
+        </label>
+      </div>
+
+      <button class="submit-btn" id="registerBtn" onclick="doRegister()">
+        <div class="btn-spinner" id="registerSpinner"></div>
+        <span id="registerBtnText">Crea Account →</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    Dati protetti con crittografia end-to-end · <a href="energyhub.html">Torna alla homepage</a>
+  </div>
+</div>
+
+<!-- Theme toggle -->
+<button class="theme-fab" id="themeFab" onclick="toggleTheme()">🌙</button>
+
+<script>
+/* ── AUTH STORAGE ── */
+// Simple localStorage-based auth (production would use a real backend)
+const AUTH_KEY = 'eh_user';
+const SESSION_KEY = 'eh_session';
+
+function getUsers() {
+  return JSON.parse(localStorage.getItem('eh_users') || '[]');
+}
+function saveUsers(users) {
+  localStorage.setItem('eh_users', JSON.stringify(users));
+}
+function setSession(user) {
+  const session = { ...user, ts: Date.now() };
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+function getSession() {
+  return JSON.parse(localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || 'null');
+}
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
+}
+
+// If already logged in, redirect to dashboard
+(function checkExisting() {
+  const s = getSession();
+  if (s && (Date.now() - s.ts) < 7 * 24 * 60 * 60 * 1000) {
+    window.location.href = 'dashboard.html';
+  }
+})();
+
+/* ── THEME ── */
+const root = document.documentElement;
+const saved = localStorage.getItem('eh-theme') || 'dark';
+root.setAttribute('data-theme', saved);
+document.getElementById('themeFab').textContent = saved === 'dark' ? '☀️' : '🌙';
+
+function toggleTheme() {
+  const n = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', n);
+  localStorage.setItem('eh-theme', n);
+  document.getElementById('themeFab').textContent = n === 'dark' ? '☀️' : '🌙';
+}
+
+/* ── TICKER ── */
+const TICKS = [
+  { label:'PUN', val:'114.82', unit:'€/MWh', dir:'up' },
+  { label:'PSV', val:'38.45', unit:'€/MWh', dir:'dn' },
+  { label:'TTF', val:'42.18', unit:'€/MWh', dir:'up' },
+  { label:'CO₂', val:'68.72', unit:'€/t', dir:'up' },
+  { label:'BRENT', val:'82.40', unit:'$/bbl', dir:'dn' },
+  { label:'PUN F1', val:'128.40', unit:'€/MWh', dir:'up' },
+  { label:'PUN F3', val:'89.10', unit:'€/MWh', dir:'dn' },
+  { label:'RINN', val:'62.4%', unit:'mix', dir:'up' },
+];
+const tr = document.getElementById('tickerTrack');
+const items = [...TICKS,...TICKS].map(t=>`
+  <div class="tick-item">
+    <span>${t.label}</span>
+    <strong class="tick-${t.dir}">${t.val}</strong>
+    <span>${t.unit}</span>
+    <span class="tick-${t.dir}">${t.dir==='up'?'▲':'▼'}</span>
+  </div>`).join('');
+tr.innerHTML = items;
+
+/* ── TABS ── */
+function switchTab(tab) {
+  document.getElementById('panelLogin').classList.toggle('active', tab==='login');
+  document.getElementById('panelRegister').classList.toggle('active', tab==='register');
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+  clearMsgs();
+}
+
+/* ── UTILS ── */
+function showMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.className = `msg-box ${type} show`;
+  el.innerHTML = `<span>${type==='error'?'⚠️':'✓'}</span> ${text}`;
+}
+function clearMsgs() {
+  ['loginMsg','registerMsg'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.className = 'msg-box';
+    el.innerHTML = '';
+  });
+}
+
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  btn.textContent = isText ? '👁' : '🙈';
+}
+
+function setLoading(btnId, spinnerId, textId, loading, text) {
+  const btn = document.getElementById(btnId);
+  document.getElementById(spinnerId).style.display = loading ? 'block' : 'none';
+  document.getElementById(textId).textContent = loading ? '' : text;
+  btn.disabled = loading;
+}
+
+/* ── PASSWORD STRENGTH ── */
+function checkStrength(pw) {
+  const bars = [document.getElementById('bar1'),document.getElementById('bar2'),document.getElementById('bar3'),document.getElementById('bar4')];
+  const label = document.getElementById('pwLabel');
+  bars.forEach(b=>{ b.className='pw-bar'; });
+
+  if (!pw) { label.textContent='Inserisci una password'; return; }
+
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  const levels = ['weak','medium','medium','strong'];
+  const labels = ['Debole','Discreta','Buona','Ottima ✓'];
+  for (let i=0;i<score;i++) bars[i].classList.add(levels[score-1]);
+  label.textContent = labels[score-1] || 'Debole';
+}
+
+/* ── PLAN SELECT ── */
+document.querySelectorAll('.plan-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+  });
+});
+
+/* ── LOGIN ── */
+async function doLogin() {
+  clearMsgs();
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  const remember = document.getElementById('rememberMe').checked;
+
+  if (!email || !pw) { showMsg('loginMsg','error','Compila tutti i campi.'); return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { showMsg('loginMsg','error','Inserisci un\'email valida.'); return; }
+
+  setLoading('loginBtn','loginSpinner','loginBtnText',true,'');
+
+  await delay(900); // simulate network
+
+  const users = getUsers();
+  const user = users.find(u => u.email === email && u.pw === btoa(pw));
+
+  if (!user) {
+    setLoading('loginBtn','loginSpinner','loginBtnText',false,'Accedi →');
+    showMsg('loginMsg','error','Email o password non corretti.');
+    document.getElementById('loginEmail').classList.add('error');
+    return;
+  }
+
+  setSession({ ...user, remember });
+  showMsg('loginMsg','success','Accesso effettuato! Reindirizzamento…');
+  setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+}
+
+/* ── REGISTER ── */
+async function doRegister() {
+  clearMsgs();
+  const nome    = document.getElementById('regNome').value.trim();
+  const cognome = document.getElementById('regCognome').value.trim();
+  const email   = document.getElementById('regEmail').value.trim();
+  const pw      = document.getElementById('regPw').value;
+  const plan    = document.querySelector('input[name="plan"]:checked')?.value || 'free';
+  const terms   = document.getElementById('acceptTerms').checked;
+  const azienda = document.getElementById('regAzienda').value.trim();
+
+  if (!nome || !email || !pw) { showMsg('registerMsg','error','Compila i campi obbligatori.'); return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { showMsg('registerMsg','error','Inserisci un\'email valida.'); return; }
+  if (pw.length < 8) { showMsg('registerMsg','error','La password deve essere di almeno 8 caratteri.'); return; }
+  if (!terms) { showMsg('registerMsg','error','Devi accettare i Termini di Servizio.'); return; }
+
+  setLoading('registerBtn','registerSpinner','registerBtnText',true,'');
+  await delay(1000);
+
+  const users = getUsers();
+  if (users.find(u=>u.email===email)) {
+    setLoading('registerBtn','registerSpinner','registerBtnText',false,'Crea Account →');
+    showMsg('registerMsg','error','Email già registrata. Prova ad accedere.');
+    return;
+  }
+
+  const user = {
+    id: 'u_' + Date.now(),
+    nome, cognome, email, azienda,
+    pw: btoa(pw),
+    plan,
+    initials: (nome[0]+(cognome[0]||'')).toUpperCase(),
+    createdAt: new Date().toISOString(),
+  };
+  users.push(user);
+  saveUsers(users);
+  setSession(user);
+
+  showMsg('registerMsg','success','Account creato! Benvenuto su EnergyHub 🎉');
+  setTimeout(() => { window.location.href = 'dashboard.html'; }, 900);
+}
+
+/* ── DEMO ── */
+function demoLogin() {
+  const demo = {
+    id:'demo', nome:'Demo', cognome:'User',
+    email:'demo@energyhub.it', plan:'pro',
+    initials:'DU', azienda:'EnergyHub Demo',
+  };
+  setSession(demo);
+  window.location.href = 'dashboard.html';
+}
+
+/* ── SOCIAL (mock) ── */
+async function socialLogin(provider) {
+  showMsg('loginMsg','success',`Reindirizzamento a ${provider}…`);
+  await delay(800);
+  demoLogin();
+}
+
+/* ── FORGOT ── */
+function showForgot() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) {
+    showMsg('loginMsg','error','Inserisci prima la tua email.');
+    return;
+  }
+  showMsg('loginMsg','success',`Link di reset inviato a ${email} (demo: controlla la console).`);
+  console.log(`[EnergyHub] Password reset for: ${email}`);
+}
+
+function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+/* ── ENTER KEY ── */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const activePanel = document.querySelector('.form-panel.active');
+  if (activePanel.id === 'panelLogin') doLogin();
+  else doRegister();
+});
+</script>
+</body>
+</html>
