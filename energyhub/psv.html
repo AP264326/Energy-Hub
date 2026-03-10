@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnergyHub — PSV Gas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<style>
+:root {
+  --accent:#0EA5E9;--accent-h:#38BDF8;--accent-glow:rgba(14,165,233,0.15);
+  --green:#10B981;--green-dim:rgba(16,185,129,0.12);
+  --red:#F43F5E;--orange:#F97316;--yellow:#FBBF24;--purple:#8B5CF6;
+  --teal:#06B6D4;--teal-dim:rgba(6,182,212,0.12);
+  --font-h:'Plus Jakarta Sans',sans-serif;
+  --font-b:'Inter',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --r4:4px;--r8:8px;--r12:12px;--r16:16px;
+  --tr:0.18s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#060C12;--s1:#0E1822;--s2:#142030;--s3:#1A2840;
+  --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.12);--b3:rgba(255,255,255,0.20);
+  --t1:#F0F5FB;--t2:#9DB4CC;--t3:#6080A0;
+  --nav:#0A1420;
+  --sh:0 4px 20px rgba(0,0,0,0.45);
+}
+[data-theme="light"]{
+  --bg:#EFF4FB;--s1:#FFFFFF;--s2:#F4F8FC;--s3:#E8F0F9;
+  --b1:rgba(0,0,0,0.08);--b2:rgba(0,0,0,0.13);--b3:rgba(0,0,0,0.22);
+  --t1:#0B1929;--t2:#2D4A66;--t3:#587A96;
+  --nav:#FFFFFF;
+  --sh:0 4px 20px rgba(0,0,0,0.07);
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--t1);font-family:var(--font-b);font-size:14px;line-height:1.5;overflow:hidden;transition:background var(--tr),color var(--tr);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--nav);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto;transition:all var(--tr)}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--b1);text-decoration:none;flex-shrink:0}
+.sb-logo-mark{width:28px;height:28px;background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.22);border-radius:var(--r8);display:flex;align-items:center;justify-content:center}
+.sb-logo-mark svg{width:15px;height:15px}
+.sb-logo-name{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.sb-logo-name em{font-style:normal;color:var(--accent)}
+.sb-sec{padding:20px 14px 6px;font-family:var(--font-m);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-weight:500}
+.sb-nav{list-style:none;padding:0 8px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13.5px;font-weight:500;transition:all var(--tr);margin-bottom:1px;text-decoration:none;white-space:nowrap}
+.sb-item:hover{background:var(--s2);color:var(--t1)}
+.sb-item.active{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(6,182,212,0.18)}
+.sb-ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--accent);color:#fff;font-family:var(--font-m);font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px}
+.sb-badge.g{background:var(--green)}.sb-badge.o{background:var(--orange)}
+.sb-bottom{margin-top:auto;padding:12px 8px;border-top:1px solid var(--b1);display:flex;flex-direction:column;gap:2px}
+.sb-theme-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13px;font-weight:500;transition:all var(--tr);border:none;background:transparent;font-family:var(--font-b);width:100%;text-align:left}
+.sb-theme-btn:hover{background:var(--s2);color:var(--t1)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;transition:background var(--tr)}
+.sb-user:hover{background:var(--s2)}
+.sb-avatar{width:28px;height:28px;background:linear-gradient(135deg,var(--teal),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--font-h);flex-shrink:0}
+.sb-user-name{font-size:12.5px;font-weight:600;color:var(--t1);line-height:1.2}
+.sb-user-plan{font-family:var(--font-m);font-size:9.5px;color:var(--teal)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:54px;flex-shrink:0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:var(--nav);border-bottom:1px solid var(--b1);gap:16px;transition:all var(--tr)}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t3)}
+.breadcrumb a{color:var(--t3);text-decoration:none;transition:color var(--tr)}
+.breadcrumb a:hover{color:var(--t2)}
+.bc-sep{opacity:0.4}
+.live-chip{display:flex;align-items:center;gap:5px;background:var(--teal-dim);border:1px solid rgba(6,182,212,0.2);border-radius:100px;padding:3px 9px;font-family:var(--font-m);font-size:10px;color:var(--teal)}
+.ldot{width:5px;height:5px;background:var(--teal);border-radius:50%;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:6px 13px;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);font-size:13px;font-weight:500;font-family:var(--font-b);cursor:pointer;transition:all var(--tr)}
+.tb-btn:hover{background:var(--s2);color:var(--t1);border-color:var(--b3)}
+.tb-btn.primary{background:var(--teal);border-color:transparent;color:#fff}
+.tb-btn.primary:hover{background:var(--accent-h)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r12);padding:12px 16px}
+.filter-label{font-family:var(--font-m);font-size:10.5px;color:var(--t3);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap}
+.filter-sep{width:1px;height:20px;background:var(--b2);flex-shrink:0}
+.pill-group{display:flex;gap:3px}
+.pill{padding:5px 12px;border-radius:100px;font-family:var(--font-m);font-size:11.5px;font-weight:500;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--t2);transition:all var(--tr)}
+.pill:hover{color:var(--t1);border-color:var(--b3)}
+.pill.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.pill.on.g{background:var(--green);border-color:var(--green)}
+.pill.on.o{background:var(--orange);border-color:var(--orange);color:#fff}
+.pill.on.p{background:var(--purple);border-color:var(--purple)}
+.filter-spacer{flex:1}
+.zoom-hint{font-family:var(--font-m);font-size:10.5px;color:var(--t3)}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kpi-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r12);padding:14px 16px;cursor:pointer;transition:all var(--tr);position:relative;overflow:hidden}
+.kpi-card:hover{border-color:var(--b2);transform:translateY(-1px);box-shadow:var(--sh)}
+.kpi-card.sel{border-color:var(--teal);background:var(--teal-dim)}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal);transform:scaleX(0);transform-origin:left;transition:transform 0.25s}
+.kpi-card.sel::after,.kpi-card:hover::after{transform:scaleX(1)}
+.kpi-lbl{font-family:var(--font-m);font-size:10.5px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.kpi-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.kpi-val{font-family:var(--font-h);font-size:23px;font-weight:800;letter-spacing:-0.8px;color:var(--t1);line-height:1}
+.kpi-curr{font-family:var(--font-m);font-size:11.5px;color:var(--t2);margin-top:2px}
+.kpi-delta{font-family:var(--font-m);font-size:11.5px;font-weight:500;margin-top:4px}
+.kpi-sub{font-family:var(--font-m);font-size:11px;color:var(--t3);margin-top:2px}
+.up{color:var(--green)}.dn{color:var(--red)}
+
+/* CHART PANEL */
+.chart-panel{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r16);overflow:hidden}
+.cp-head{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1);flex-wrap:wrap;gap:10px}
+.cp-title{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.cp-sub{font-family:var(--font-m);font-size:11.5px;color:var(--t2);margin-top:2px}
+.cp-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.range-tabs{display:flex;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r8);padding:3px}
+.rtab{padding:4px 12px;border-radius:6px;font-family:var(--font-m);font-size:11.5px;cursor:pointer;color:var(--t2);transition:all var(--tr);border:none;background:transparent;font-weight:500}
+.rtab:hover{color:var(--t1)}
+.rtab.active{background:var(--s1);color:var(--t1);box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+.icon-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);cursor:pointer;transition:all var(--tr);font-size:13px}
+.icon-btn:hover{background:var(--s2);color:var(--t1)}
+.icon-btn.active{background:var(--teal-dim);border-color:rgba(6,182,212,0.25);color:var(--teal)}
+.cp-body{padding:16px 18px 14px}
+.chart-wrap{position:relative;height:260px}
+.chart-legend{display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1);flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:11px;color:var(--t2);cursor:pointer;transition:opacity var(--tr)}
+.leg-item.off{opacity:0.3}
+.leg-sw{width:16px;height:3px;border-radius:2px}
+
+/* PANEL */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r16);overflow:hidden}
+.ph{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1)}
+.ph-l{}
+.ph-title{font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.ph-sub{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-top:2px}
+.p-btn{padding:5px 11px;border:1px solid var(--b2);border-radius:var(--r4);background:transparent;color:var(--t2);font-family:var(--font-m);font-size:11px;cursor:pointer;transition:all var(--tr)}
+.p-btn:hover{background:var(--s2);color:var(--t1)}
+.p-btn.on{background:var(--teal-dim);border-color:rgba(6,182,212,0.25);color:var(--teal)}
+.pb{padding:14px 18px}
+
+/* GRID LAYOUTS */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.col-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+
+/* SPREAD TABLE */
+.spread-table{width:100%;border-collapse:collapse}
+.spread-table th{font-family:var(--font-m);font-size:10.5px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);padding:8px 14px;text-align:left;border-bottom:1px solid var(--b1);font-weight:500;background:var(--s2)}
+.spread-table td{padding:9px 14px;border-bottom:1px solid var(--b1);font-size:13px;color:var(--t2)}
+.spread-table tr:last-child td{border-bottom:none}
+.spread-table tr:hover td{background:var(--s2)}
+.st-name{font-weight:600;color:var(--t1)!important}
+.st-val{font-family:var(--font-m);font-size:12px;font-weight:500;color:var(--t1)!important}
+.st-pos{color:var(--green)!important;font-family:var(--font-m);font-size:11.5px}
+.st-neg{color:var(--red)!important;font-family:var(--font-m);font-size:11.5px}
+
+/* STORAGE GAUGE */
+.storage-section{padding:16px 18px}
+.storage-label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.storage-pct{font-family:var(--font-h);font-size:28px;font-weight:800;color:var(--t1);letter-spacing:-1px}
+.storage-sub{font-family:var(--font-m);font-size:11px;color:var(--t3)}
+.storage-bar-outer{height:12px;background:var(--s3);border-radius:6px;overflow:hidden;margin-bottom:12px}
+.storage-bar-inner{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--teal),var(--green));transition:width 1s cubic-bezier(.4,0,.2,1)}
+.storage-milestones{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:10px;color:var(--t3)}
+.storage-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.sts{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r8);padding:10px 12px;text-align:center}
+.sts-val{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--t1)}
+.sts-lbl{font-family:var(--font-m);font-size:10px;color:var(--t3);margin-top:2px}
+
+/* CURVE TABLE */
+.curve-row{display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--b1)}
+.curve-row:last-child{border-bottom:none}
+.curve-row:hover{background:var(--s2)}
+.cr-month{font-family:var(--font-m);font-size:12px;color:var(--t2);width:80px;flex-shrink:0}
+.cr-val{font-family:var(--font-m);font-size:13px;font-weight:500;color:var(--t1);width:80px}
+.cr-bar-wrap{flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.cr-bar{height:100%;border-radius:2px;background:var(--teal)}
+.cr-delta{font-family:var(--font-m);font-size:11px;width:56px;text-align:right;flex-shrink:0}
+
+/* AI BOX */
+.ai-box{background:linear-gradient(135deg,rgba(6,182,212,0.06),rgba(16,185,129,0.04));border:1px solid rgba(6,182,212,0.18);border-radius:var(--r16);overflow:hidden}
+.ai-box-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(6,182,212,0.12)}
+.ai-box-title{display:flex;align-items:center;gap:8px;font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1)}
+.ai-chip{display:flex;align-items:center;gap:5px;background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.2);border-radius:100px;padding:3px 10px;font-family:var(--font-m);font-size:10px;color:var(--teal)}
+.ai-box-body{padding:14px 18px;display:flex;gap:16px}
+.ai-text{flex:1;font-size:13.5px;color:var(--t2);line-height:1.7;min-height:60px}
+.ai-text strong{color:var(--t1);font-weight:600}
+.ai-text .hl{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.15);border-radius:4px;padding:1px 6px;font-family:var(--font-m);font-size:12px;color:var(--teal)}
+.ai-dots{display:flex;gap:4px;align-items:center;padding:8px 0}
+.ai-dot{width:6px;height:6px;background:var(--teal);border-radius:50%;animation:aiD 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aiD{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.ai-qs{width:260px;flex-shrink:0;border-left:1px solid rgba(6,182,212,0.12);padding-left:16px;display:flex;flex-direction:column;gap:6px}
+.ai-qs-lbl{font-family:var(--font-m);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px}
+.ai-q{display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.12);border-radius:var(--r8);font-size:12px;color:var(--t2);cursor:pointer;transition:all var(--tr);font-family:var(--font-b)}
+.ai-q:hover{background:rgba(6,182,212,0.12);color:var(--t1);border-color:rgba(6,182,212,0.25)}
+.ai-input-row{display:flex;gap:6px;margin-top:2px}
+.ai-input{flex:1;background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.15);border-radius:var(--r8);padding:7px 10px;font-size:12px;color:var(--t1);font-family:var(--font-b);outline:none;transition:border-color var(--tr)}
+.ai-input:focus{border-color:var(--teal)}
+.ai-input::placeholder{color:var(--t3)}
+.ai-send{width:32px;height:32px;background:var(--teal);border:none;border-radius:var(--r8);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0}
+.ai-send:hover{background:var(--accent-h)}
+
+/* NEWS */
+.news-item{display:flex;gap:12px;padding:10px 18px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background var(--tr)}
+.news-item:last-child{border-bottom:none}
+.news-item:hover{background:var(--s2)}
+.ni-time{font-family:var(--font-m);font-size:11px;color:var(--t3);width:38px;flex-shrink:0;padding-top:1px}
+.ni-body{}
+.ni-tag{font-family:var(--font-m);font-size:10px;letter-spacing:0.4px;text-transform:uppercase;color:var(--teal);margin-bottom:3px;font-weight:500}
+.ni-text{font-size:12.5px;color:var(--t2);line-height:1.5}
+.ni-src{font-family:var(--font-m);font-size:10px;color:var(--t3);margin-top:2px}
+
+/* DATA TABLE */
+.data-table-wrap{overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse;min-width:560px}
+.data-table th{font-family:var(--font-m);font-size:10.5px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);padding:9px 14px;text-align:left;border-bottom:1px solid var(--b2);background:var(--s2);font-weight:500;white-space:nowrap}
+.data-table td{padding:9px 14px;border-bottom:1px solid var(--b1);font-size:12.5px;color:var(--t2);white-space:nowrap}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--s2)}
+.dt-m{font-family:var(--font-m);font-size:12px;color:var(--t1);font-weight:500}
+.dt-up{color:var(--green);font-family:var(--font-m);font-size:11.5px}
+.dt-dn{color:var(--red);font-family:var(--font-m);font-size:11.5px}
+.tfoot{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--b1);background:var(--s2)}
+.tfoot-info{font-family:var(--font-m);font-size:11px;color:var(--t3)}
+.exp-btns{display:flex;gap:6px}
+.exp-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);font-family:var(--font-m);font-size:11px;cursor:pointer;transition:all var(--tr)}
+.exp-btn:hover{background:var(--s1);color:var(--t1);border-color:var(--b3)}
+.exp-btn.primary{background:var(--teal);border-color:transparent;color:#fff}
+.exp-btn.primary:hover{filter:brightness(1.1)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="energyhub.html" class="sb-logo">
+    <div class="sb-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <span class="sb-logo-name">Energy<em>Hub</em></span>
+  </a>
+  <div class="sb-sec">Principale</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="dashboard.html"><span class="sb-ico">⚡</span>Dashboard</a></li>
+    <li><a class="sb-item" href="pun.html"><span class="sb-ico">📈</span>Prezzi PUN</a></li>
+    <li><a class="sb-item active" href="#"><span class="sb-ico">🔵</span>PSV Gas</a></li>
+    <li><a class="sb-item" href="forecast.html"><span class="sb-ico">🤖</span>Forecast AI<span class="sb-badge">New</span></a></li>
+  </ul>
+  <div class="sb-sec">Mercati</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="capacity.html"><span class="sb-ico">📊</span>Capacity Market</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🔄</span>Dispacciamento</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🌍</span>TTF / CO₂</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📉</span>Fondamentali</a></li>
+  </ul>
+  <div class="sb-sec">Strumenti</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="#"><span class="sb-ico">📋</span>Oneri ARERA</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🔌</span>CTE Calculator</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">💡</span>Comparatore</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📰</span>News<span class="sb-badge o">4</span></a></li>
+  </ul>
+  <div class="sb-bottom">
+    <button class="sb-theme-btn" id="themeToggle"><span id="themeIcon">☀️</span><span id="themeLabel">Tema Chiaro</span></button>
+    <div class="sb-user" onclick="toggleUserMenu()" style="cursor:pointer">
+      <div class="sb-avatar" id="sbAvatar">MA</div>
+      <div><div class="sb-user-name" id="sbUserName">Mario Alberti</div><div class="sb-user-plan" id="sbUserPlan">PRO · attivo</div></div>
+      <span style="margin-left:auto;color:var(--t3);font-size:11px">⌄</span>
+    </div>
+    <div id="userMenu" style="display:none;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);padding:4px;margin:4px 0 0">
+      <div onclick="logout()" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r4);font-size:13px;color:#F43F5E;cursor:pointer" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background=''">🚪 Disconnetti</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">
+        <a href="energyhub.html">EnergyHub</a><span class="bc-sep">/</span>
+        <a href="dashboard.html">Dashboard</a><span class="bc-sep">/</span>
+        <span style="color:var(--t1);font-weight:500">PSV Gas</span>
+      </div>
+      <div class="live-chip"><div class="ldot"></div>Live · Gestore Rete</div>
+    </div>
+    <div class="topbar-right">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--t2)" id="currentDate"></span>
+      <button class="tb-btn" onclick="exportCSV()">⬇ CSV</button>
+      <button class="tb-btn" onclick="exportExcel()">⬇ Excel</button>
+      <button class="tb-btn primary" onclick="askAI('Fornisci un\'analisi completa del mercato PSV gas italiano oggi, includendo spread TTF, livelli di stoccaggio e outlook.')">✦ Analisi AI</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-label">Prodotto</span>
+      <div class="pill-group">
+        <button class="pill on" onclick="setProduct(this,'spot')" data-p="spot">Day-Ahead</button>
+        <button class="pill"    onclick="setProduct(this,'wda')"  data-p="wda">Within-Day</button>
+        <button class="pill"    onclick="setProduct(this,'bal')"  data-p="bal">Balance Month</button>
+        <button class="pill"    onclick="setProduct(this,'q1')"   data-p="q1">Quarterly</button>
+      </div>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Confronto</span>
+      <div class="pill-group">
+        <button class="pill on g" onclick="toggleOverlay(this,'TTF')"  data-ov="TTF">TTF</button>
+        <button class="pill"      onclick="toggleOverlay(this,'NBP')"  data-ov="NBP">NBP</button>
+        <button class="pill"      onclick="toggleOverlay(this,'ZEEH')" data-ov="ZEEH">ZEE-H</button>
+      </div>
+      <div class="filter-spacer"></div>
+      <span class="zoom-hint">🖱 Scroll = zoom · Trascina = pan</span>
+      <button class="pill" onclick="resetZoom()" style="border-color:var(--b3)">↺ Reset</button>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi-card sel" onclick="selKpi(this,'PSV')">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--teal)"></div>PSV DAY-AHEAD</div>
+        <div class="kpi-val">38<span style="font-size:16px;font-weight:600">.45</span></div>
+        <div class="kpi-curr">€/MWh · Spot</div>
+        <div class="kpi-delta dn">▼ −0.8% vs ieri</div>
+      </div>
+      <div class="kpi-card" onclick="selKpi(this,'TTF')">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--orange)"></div>TTF DAY-AHEAD</div>
+        <div class="kpi-val">42<span style="font-size:16px;font-weight:600">.18</span></div>
+        <div class="kpi-curr">€/MWh · Amsterdam</div>
+        <div class="kpi-delta up">▲ +0.4%</div>
+      </div>
+      <div class="kpi-card" onclick="selKpi(this,'SPREAD')">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--purple)"></div>SPREAD PSV–TTF</div>
+        <div class="kpi-val">−3<span style="font-size:16px;font-weight:600">.73</span></div>
+        <div class="kpi-curr">€/MWh</div>
+        <div class="kpi-delta dn">▼ Italia sconta TTF</div>
+      </div>
+      <div class="kpi-card" onclick="selKpi(this,'STOR')">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--green)"></div>STOCCAGGI UE</div>
+        <div class="kpi-val">62<span style="font-size:16px;font-weight:600">.4%</span></div>
+        <div class="kpi-curr">della capacità</div>
+        <div class="kpi-delta dn">▼ −0.3pp vs ieri</div>
+      </div>
+      <div class="kpi-card" onclick="selKpi(this,'FLOW')">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--yellow)"></div>FLUSSI TARVISIO</div>
+        <div class="kpi-val">84<span style="font-size:16px;font-weight:600">.2</span></div>
+        <div class="kpi-curr">Mm³/giorno</div>
+        <div class="kpi-delta up">▲ +2.1%</div>
+      </div>
+    </div>
+
+    <!-- AI box -->
+    <div class="ai-box">
+      <div class="ai-box-head">
+        <div class="ai-box-title"><span>✦</span> Analisi AI Mercato Gas</div>
+        <div class="ai-chip"><div class="ldot"></div>Claude · Real-time</div>
+      </div>
+      <div class="ai-box-body">
+        <div class="ai-text" id="aiResp">
+          <div style="display:none" id="aiLoad"><div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>
+          Clicca una domanda rapida o scrivi la tua per ottenere un'analisi AI del mercato gas PSV.
+        </div>
+        <div class="ai-qs">
+          <div class="ai-qs-lbl">Chiedi all'AI</div>
+          <button class="ai-q" onclick="askAI('Perché oggi lo spread PSV-TTF è negativo? Analizza le cause principali e il trend storico.')">📊 Spread PSV–TTF negativo: perché?</button>
+          <button class="ai-q" onclick="askAI('I livelli di stoccaggio europei al 62% sono sufficienti per l\'inverno? Analizza il rischio.')">🏭 Stoccaggi: rischio approvvigionamento?</button>
+          <button class="ai-q" onclick="askAI('Analizza la curva forward PSV: cosa indicano i prezzi dei mesi futuri rispetto allo spot?')">📅 Analisi curva forward PSV</button>
+          <button class="ai-q" onclick="askAI('Quali sono i principali fattori che muovono il prezzo del gas PSV oggi: meteo, domanda, flussi?')">🌡️ Driver di prezzo di oggi</button>
+          <div class="ai-input-row">
+            <input class="ai-input" id="aiCustom" placeholder="Scrivi la tua domanda…" onkeydown="if(event.key==='Enter')sendCustom()">
+            <button class="ai-send" onclick="sendCustom()">↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main chart -->
+    <div class="chart-panel">
+      <div class="cp-head">
+        <div>
+          <div class="cp-title" id="chartTitle">PSV Gas — Day-Ahead Spot</div>
+          <div class="cp-sub" id="chartSub">Gestore Mercati Energetici · €/MWh · aggiornamento continuo</div>
+        </div>
+        <div class="cp-controls">
+          <div class="range-tabs">
+            <button class="rtab" onclick="setRange(this,'1G')">Oggi</button>
+            <button class="rtab active" onclick="setRange(this,'1S')">7 giorni</button>
+            <button class="rtab" onclick="setRange(this,'1M')">30 giorni</button>
+            <button class="rtab" onclick="setRange(this,'3M')">3 mesi</button>
+            <button class="rtab" onclick="setRange(this,'1A')">1 anno</button>
+          </div>
+          <button class="icon-btn active" id="btnTTF" onclick="toggleTTF(this)" title="Mostra TTF">🔶 TTF</button>
+          <button class="icon-btn" id="btnFcast" onclick="toggleForecast(this)" title="Forecast">🔮</button>
+        </div>
+      </div>
+      <div class="cp-body">
+        <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+        <div class="chart-legend" id="chartLegend"></div>
+      </div>
+    </div>
+
+    <!-- Spread + Storage -->
+    <div class="two-col">
+
+      <!-- Spread chart -->
+      <div class="panel">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Spread PSV vs Hub Europei</div><div class="ph-sub">Differenziale giornaliero · €/MWh</div></div>
+          <button class="p-btn" onclick="askAI('Analizza lo spread PSV rispetto ai principali hub europei TTF, NBP e ZEE: cosa indica il differenziale attuale?')">✦ AI</button>
+        </div>
+        <div class="pb" style="padding:14px 18px">
+          <div style="height:160px"><canvas id="spreadChart"></canvas></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="spread-table">
+            <thead><tr><th>Hub</th><th>Prezzo</th><th>Spread vs PSV</th><th>7gg media</th><th>Trend</th></tr></thead>
+            <tbody id="spreadTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Storage -->
+      <div class="panel">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Stoccaggi Gas Europa</div><div class="ph-sub">Aggregato GIE AGSI · dati giornalieri</div></div>
+          <button class="p-btn" onclick="askAI('Analizza i livelli di stoccaggio gas in Europa e in Italia: sono adeguati per la domanda invernale?')">✦ AI</button>
+        </div>
+        <div class="storage-section">
+          <div class="storage-label-row">
+            <div>
+              <div class="storage-pct" id="storPct">62.4%</div>
+              <div class="storage-sub">Capacità UE media · <span style="color:var(--teal)">Target ACER: 80%</span></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:var(--font-m);font-size:11px;color:var(--t3)">variazione</div>
+              <div style="font-family:var(--font-m);font-size:13px" class="dn">▼ −0.3pp oggi</div>
+            </div>
+          </div>
+          <div class="storage-bar-outer">
+            <div class="storage-bar-inner" id="storBar" style="width:62.4%"></div>
+          </div>
+          <div class="storage-milestones">
+            <span>0%</span><span>25%</span><span>50%</span>
+            <span style="color:var(--teal)">80% target</span><span>100%</span>
+          </div>
+          <div class="storage-stats">
+            <div class="sts"><div class="sts-val" style="color:var(--teal)">62.4%</div><div class="sts-lbl">UE Media</div></div>
+            <div class="sts"><div class="sts-val" style="color:var(--green)">71.2%</div><div class="sts-lbl">Italia</div></div>
+            <div class="sts"><div class="sts-val" style="color:var(--orange)">58.8%</div><div class="sts-lbl">Germania</div></div>
+          </div>
+          <div style="height:100px;margin-top:14px"><canvas id="storageChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forward curve + News -->
+    <div class="two-col">
+
+      <!-- Forward curve -->
+      <div class="panel">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">Curva Forward PSV</div><div class="ph-sub">Prezzi mensili fino a 12 mesi · €/MWh</div></div>
+          <div style="display:flex;gap:5px">
+            <button class="p-btn on" id="cfBtn1" onclick="switchCurveView(this,'psv')">PSV</button>
+            <button class="p-btn" id="cfBtn2" onclick="switchCurveView(this,'ttf')">TTF</button>
+          </div>
+        </div>
+        <div id="curveList" style="padding:4px 0 8px"></div>
+      </div>
+
+      <!-- News -->
+      <div class="panel">
+        <div class="ph">
+          <div class="ph-l"><div class="ph-title">News Gas & Energia</div><div class="ph-sub">Ultime 24 ore · fonti verificate</div></div>
+          <button class="p-btn">Tutte →</button>
+        </div>
+        <div id="newsFeed"></div>
+      </div>
+    </div>
+
+    <!-- Data table -->
+    <div class="panel">
+      <div class="ph">
+        <div class="ph-l"><div class="ph-title">Storico Prezzi PSV</div><div class="ph-sub" id="tableSubTitle">Dati giornalieri · ultimi 7 giorni</div></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="tSearch" placeholder="Filtra per data…" style="padding:5px 10px;border:1px solid var(--b2);border-radius:var(--r8);background:var(--s2);color:var(--t1);font-family:var(--font-m);font-size:11.5px;outline:none;width:150px;transition:border-color 0.15s" oninput="filterTable(this.value)">
+          <button class="p-btn" onclick="sortTable()">↕ Ordina</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr>
+            <th>Data</th><th>PSV Spot</th><th>TTF Spot</th><th>Spread</th>
+            <th>Volume (GWh)</th><th>Var. PSV</th><th>Stoccaggi IT</th><th>Fonte</th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="tfoot">
+        <span class="tfoot-info" id="tableInfo">Mostrando 1–20 record</span>
+        <div class="exp-btns">
+          <button class="exp-btn" onclick="exportCSV()">⬇ CSV</button>
+          <button class="exp-btn" onclick="exportExcel()">⬇ Excel</button>
+          <button class="exp-btn primary" onclick="exportCSV('full')">⬇ Export Completo</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+/* ══ AUTH ══ */
+(function(){
+  const s = JSON.parse(localStorage.getItem('eh_session')||sessionStorage.getItem('eh_session')||'null');
+  if(!s){ window.location.href='login.html'; return; }
+  const av=document.getElementById('sbAvatar');
+  const nm=document.getElementById('sbUserName');
+  const pl=document.getElementById('sbUserPlan');
+  if(av) av.textContent=s.initials||(s.nome||'U')[0].toUpperCase();
+  if(nm) nm.textContent=(s.nome||'')+' '+(s.cognome||'');
+  if(pl) pl.textContent=(s.plan||'free').toUpperCase()+' · attivo';
+})();
+function toggleUserMenu(){const m=document.getElementById('userMenu');if(m)m.style.display=m.style.display==='none'?'block':'none';}
+function logout(){localStorage.removeItem('eh_session');sessionStorage.removeItem('eh_session');window.location.href='login.html';}
+
+/* ══ THEME ══ */
+const root=document.documentElement;
+const saved=localStorage.getItem('eh-theme')||'dark';
+root.setAttribute('data-theme',saved);
+updateThemeBtn();
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const n=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',n);
+  localStorage.setItem('eh-theme',n);
+  updateThemeBtn();
+  setTimeout(rebuildAll,50);
+});
+function updateThemeBtn(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  document.getElementById('themeIcon').textContent=dark?'☀️':'🌙';
+  document.getElementById('themeLabel').textContent=dark?'Tema Chiaro':'Tema Scuro';
+}
+document.getElementById('currentDate').textContent=
+  new Date().toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+
+/* ══ DATA ══ */
+function rnd(b,v){return+(b+(Math.random()-.5)*v).toFixed(2)}
+
+let currentRange='1S', showTTF=true, showForecast=false, sortAsc=true;
+let mainChart=null, spreadChartInst=null, storageChartInst=null;
+
+const HUBS=[
+  {name:'TTF',  val:42.18, color:'#F97316'},
+  {name:'NBP',  val:43.10, color:'#8B5CF6'},
+  {name:'ZEE-H',val:41.85, color:'#FBBF24'},
+];
+
+function genSeries(range, base, vol, trend=0){
+  const labels=[],data=[];
+  if(range==='1G'){
+    for(let h=0;h<24;h++){
+      labels.push(`${String(h).padStart(2,'0')}:00`);
+      data.push(rnd(base+(h/24)*trend,vol));
+    }
+  } else {
+    const days={'1S':7,'1M':30,'3M':90,'1A':365}[range]||7;
+    for(let i=days-1;i>=0;i--){
+      const d=new Date();d.setDate(d.getDate()-i);
+      labels.push(d.toLocaleDateString('it-IT',{day:'numeric',month:'short'}));
+      data.push(rnd(base+(i/days)*trend,vol));
+    }
+  }
+  return{labels,data};
+}
+
+/* ══ CHART DEFAULTS ══ */
+function cd(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  return{
+    grid: dark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.07)',
+    tick: dark?'#6080A0':'#2D4A66',
+    tipBg: dark?'#14222E':'#FFFFFF',
+    tipBord: dark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.13)',
+    tipText: dark?'#F0F5FB':'#0B1929',
+  };
+}
+
+/* ══ MAIN CHART ══ */
+function buildMain(){
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  const c=cd();
+  const psv=genSeries(currentRange,38.45,2.5,-1.2);
+  const ttf=genSeries(currentRange,42.18,2.8,0.8);
+
+  const gradPSV=ctx.createLinearGradient(0,0,0,260);
+  gradPSV.addColorStop(0,'rgba(6,182,212,0.20)');
+  gradPSV.addColorStop(1,'rgba(6,182,212,0.00)');
+
+  const datasets=[{
+    label:'PSV Day-Ahead',
+    data:psv.data,
+    borderColor:'#06B6D4',borderWidth:2,
+    backgroundColor:gradPSV,fill:!showTTF,
+    tension:0.4,
+    pointRadius:currentRange==='1G'?3:2,
+    pointHoverRadius:6,
+    pointBackgroundColor:'#06B6D4',
+    pointBorderColor:root.getAttribute('data-theme')==='dark'?'#0E1822':'#fff',
+    pointBorderWidth:2,
+  }];
+
+  if(showTTF){
+    const gradTTF=ctx.createLinearGradient(0,0,0,260);
+    gradTTF.addColorStop(0,'rgba(249,115,22,0.12)');
+    gradTTF.addColorStop(1,'rgba(249,115,22,0.00)');
+    datasets.push({
+      label:'TTF Amsterdam',
+      data:ttf.data,
+      borderColor:'#F97316',borderWidth:1.8,
+      backgroundColor:gradTTF,fill:false,
+      tension:0.4,
+      pointRadius:0,pointHoverRadius:5,
+      pointBackgroundColor:'#F97316',
+      pointBorderColor:root.getAttribute('data-theme')==='dark'?'#0E1822':'#fff',
+      pointBorderWidth:2,
+    });
+  }
+
+  if(showForecast){
+    const fData=[...psv.data.slice(0,-1),...Array(5).fill(null).map((_,i)=>+(psv.data[psv.data.length-1]+(i+1)*0.4+rnd(0,0.8)).toFixed(2))];
+    datasets.push({
+      label:'Forecast AI',
+      data:fData,
+      borderColor:'#10B981',borderWidth:2,borderDash:[5,4],
+      backgroundColor:'transparent',fill:false,tension:0.4,
+      pointRadius:ctx=>ctx.dataIndex>=psv.data.length-1?4:0,
+      pointBackgroundColor:'#10B981',
+      pointBorderColor:root.getAttribute('data-theme')==='dark'?'#0E1822':'#fff',
+      pointBorderWidth:2,
+    });
+  }
+
+  const labels=showForecast?[...psv.labels,'+1g','+2g','+3g','+4g','+5g']:psv.labels;
+
+  mainChart=new Chart(ctx,{
+    type:'line',data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,
+          titleColor:c.tipText,bodyColor:c.tick,
+          titleFont:{family:"'Plus Jakarta Sans'",size:12,weight:'700'},
+          bodyFont:{family:"'JetBrains Mono'",size:11},
+          padding:10,cornerRadius:8,
+          callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)??'—'} €/MWh`}
+        },
+        zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'x'},pan:{enabled:true,mode:'x'}}
+      },
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},maxRotation:0,maxTicksLimit:10}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},callback:v=>`${v} €`},position:'right'}
+      }
+    }
+  });
+  buildLegend(datasets);
+}
+
+function buildLegend(datasets){
+  document.getElementById('chartLegend').innerHTML=datasets.map((ds,i)=>`
+    <div class="leg-item" onclick="toggleDs(${i},this)">
+      <div class="leg-sw" style="background:${ds.borderColor};${ds.borderDash?'background:repeating-linear-gradient(90deg,'+ds.borderColor+' 0,'+ds.borderColor+' 5px,transparent 5px,transparent 9px)':''}"></div>
+      <span>${ds.label}</span>
+    </div>`).join('');
+}
+function toggleDs(i,el){
+  const m=mainChart.getDatasetMeta(i);
+  m.hidden=!m.hidden;el.classList.toggle('off',m.hidden);mainChart.update();
+}
+
+/* ══ SPREAD CHART ══ */
+function buildSpread(){
+  const ctx=document.getElementById('spreadChart').getContext('2d');
+  const c=cd();
+  const days=7;
+  const labels=[],data=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString('it-IT',{day:'numeric',month:'short'}));
+    data.push(rnd(-3.73,0.8));
+  }
+  const colors=data.map(v=>v>=0?'rgba(16,185,129,0.7)':'rgba(244,63,94,0.7)');
+  spreadChartInst=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:3,borderSkipped:false}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,
+        titleColor:c.tipText,bodyColor:c.tick,
+        titleFont:{family:"'Plus Jakarta Sans'",size:11,weight:'700'},
+        bodyFont:{family:"'JetBrains Mono'",size:10},padding:8,cornerRadius:6,
+        callbacks:{label:ctx=>` Spread: ${ctx.parsed.y.toFixed(2)} €/MWh`}
+      }},
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9}}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}€`},position:'right'}
+      }
+    }
+  });
+
+  // Hub table
+  const tbody=document.getElementById('spreadTbody');
+  tbody.innerHTML=HUBS.map(h=>{
+    const spread=(h.val-38.45).toFixed(2);
+    const avg=rnd(h.val,1).toFixed(2);
+    const trend=parseFloat(spread)>=0?'▲':'▼';
+    return`<tr>
+      <td class="st-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${h.color};margin-right:6px"></span>${h.name}</td>
+      <td class="st-val">${h.val.toFixed(2)}</td>
+      <td class="${parseFloat(spread)>=0?'st-pos':'st-neg'}">${trend} ${Math.abs(spread)}</td>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--t2)">${avg}</td>
+      <td style="font-family:var(--font-m);font-size:11px;color:var(--t3)">${parseFloat(spread)>=0?'▲ +0.2%':'▼ −0.3%'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══ STORAGE CHART ══ */
+function buildStorage(){
+  const ctx=document.getElementById('storageChart').getContext('2d');
+  const c=cd();
+  const days=14,labels=[],data=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString('it-IT',{day:'numeric',month:'short'}));
+    data.push(rnd(63,3));
+  }
+  const grad=ctx.createLinearGradient(0,0,0,100);
+  grad.addColorStop(0,'rgba(6,182,212,0.3)');
+  grad.addColorStop(1,'rgba(6,182,212,0.0)');
+  storageChartInst=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{data,borderColor:'#06B6D4',borderWidth:1.8,backgroundColor:grad,fill:true,tension:0.4,pointRadius:0,pointHoverRadius:4}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,
+        titleColor:c.tipText,bodyColor:c.tick,
+        bodyFont:{family:"'JetBrains Mono'",size:10},padding:6,cornerRadius:6,
+        callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}%`}
+      }},
+      scales:{
+        x:{display:false},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}%`},position:'right',min:50,max:80}
+      }
+    }
+  });
+}
+
+/* ══ FORWARD CURVE ══ */
+const MONTHS=['Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic','Gen','Feb','Mar'];
+const PSV_CURVE=[37.80,35.20,32.40,30.10,29.80,33.50,40.20,44.80,46.10,43.50,41.20,39.80];
+const TTF_CURVE=[41.50,38.90,35.80,33.20,32.80,36.90,43.50,48.20,49.80,46.90,44.30,42.80];
+
+function buildCurve(src='psv'){
+  const data=src==='psv'?PSV_CURVE:TTF_CURVE;
+  const max=Math.max(...data);
+  const color=src==='psv'?'var(--teal)':'var(--orange)';
+  document.getElementById('curveList').innerHTML=MONTHS.map((m,i)=>{
+    const prev=i>0?data[i-1]:data[0];
+    const delta=(data[i]-prev).toFixed(2);
+    const cls=parseFloat(delta)>=0?'up':'dn';
+    return`<div class="curve-row">
+      <div class="cr-month">${m} 2025</div>
+      <div class="cr-val">${data[i].toFixed(2)} <span style="font-size:10px;color:var(--t3)">€/MWh</span></div>
+      <div class="cr-bar-wrap"><div class="cr-bar" style="width:${(data[i]/max*100).toFixed(0)}%;background:${color}"></div></div>
+      <div class="cr-delta ${cls}">${parseFloat(delta)>=0?'▲':'▼'} ${Math.abs(delta)}</div>
+    </div>`;
+  }).join('');
+}
+function switchCurveView(btn,src){
+  document.querySelectorAll('#cfBtn1,#cfBtn2').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  buildCurve(src);
+}
+
+/* ══ NEWS ══ */
+const NEWS=[
+  {time:'10:22',tag:'STOCCAGGI',text:'GIE AGSI: stoccaggi UE scendono al 62.4%, quinta settimana consecutiva in calo',src:'GIE AGSI'},
+  {time:'09:45',tag:'FLUSSI',text:'Tarvisio: incremento flussi +4% vs ieri — ripresa forniture dalla Russia via Austria',src:'Snam Rete Gas'},
+  {time:'08:30',tag:'PSV',text:'PSV Day-Ahead apre a 38.45 €/MWh, -0.8% vs closing ieri su pressione stoccaggi',src:'GME'},
+  {time:'07:55',tag:'TTF',text:'TTF Amsterdam futures aprono in rialzo a 42.18 €/MWh, spread con PSV si allarga',src:'ICE'},
+  {time:'Ieri',tag:'ARERA',text:'ARERA pubblica aggiornamento componenti gas: tariffe trasporto Q2 invariate',src:'ARERA'},
+];
+function buildNews(){
+  document.getElementById('newsFeed').innerHTML=NEWS.map(n=>`
+    <div class="news-item">
+      <div class="ni-time">${n.time}</div>
+      <div class="ni-body">
+        <div class="ni-tag">${n.tag}</div>
+        <div class="ni-text">${n.text}</div>
+        <div class="ni-src">${n.src}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══ DATA TABLE ══ */
+let allRows=[];
+function genRows(){
+  allRows=[];
+  const days={'1G':1,'1S':7,'1M':30,'3M':90,'1A':365}[currentRange]||7;
+  for(let i=days-1;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const psv=rnd(38.45,2.5);
+    const ttf=rnd(42.18,2.8);
+    const prev=rnd(38.8,2);
+    allRows.push({
+      date:d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}),
+      psv,ttf,
+      spread:+(ttf-psv).toFixed(2),
+      vol:rnd(850,200),
+      diff:+(psv-prev).toFixed(2),
+      stor:rnd(71.2,3),
+    });
+  }
+}
+function renderTable(rows){
+  document.getElementById('tableBody').innerHTML=rows.map(r=>`
+    <tr>
+      <td class="dt-m">${r.date}</td>
+      <td class="dt-m">${r.psv.toFixed(2)} <span style="font-size:10.5px;color:var(--t3)">€/MWh</span></td>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--orange)">${r.ttf.toFixed(2)}</td>
+      <td class="${r.spread>=0?'dt-up':'dt-dn'}">${r.spread>=0?'+':''}${r.spread}</td>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--t2)">${r.vol.toFixed(0)}</td>
+      <td class="${r.diff>=0?'dt-up':'dt-dn'}">${r.diff>=0?'▲':'▼'} ${Math.abs(r.diff).toFixed(2)}</td>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--teal)">${r.stor.toFixed(1)}%</td>
+      <td style="font-family:var(--font-m);font-size:10.5px;color:var(--t3)">GME/Snam</td>
+    </tr>`).join('');
+  document.getElementById('tableInfo').textContent=`Mostrando ${Math.min(20,rows.length)} di ${allRows.length} record`;
+}
+function buildTable(){genRows();renderTable(allRows.slice(0,20));}
+function filterTable(q){
+  if(!q){renderTable(allRows.slice(0,20));return;}
+  renderTable(allRows.filter(r=>r.date.includes(q)).slice(0,20));
+}
+function sortTable(){
+  sortAsc=!sortAsc;
+  renderTable([...allRows].sort((a,b)=>sortAsc?a.psv-b.psv:b.psv-a.psv).slice(0,20));
+}
+
+/* ══ EXPORT ══ */
+function exportCSV(mode='partial'){
+  const rows=mode==='full'?allRows:allRows.slice(0,20);
+  let csv='Data,PSV (€/MWh),TTF (€/MWh),Spread,Volume (GWh),Variazione,Stoccaggi IT (%)\n';
+  rows.forEach(r=>`${csv}${r.date},${r.psv.toFixed(2)},${r.ttf.toFixed(2)},${r.spread},${r.vol.toFixed(0)},${r.diff.toFixed(2)},${r.stor.toFixed(1)}\n`);
+  rows.forEach(r=>{ csv+=`${r.date},${r.psv.toFixed(2)},${r.ttf.toFixed(2)},${r.spread},${r.vol.toFixed(0)},${r.diff.toFixed(2)},${r.stor.toFixed(1)}\n`; });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`psv_${currentRange}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+function exportExcel(){
+  let tsv='Data\tPSV (€/MWh)\tTTF (€/MWh)\tSpread\tVolume (GWh)\tVariazione\tStoccaggi IT (%)\n';
+  allRows.forEach(r=>{ tsv+=`${r.date}\t${r.psv.toFixed(2)}\t${r.ttf.toFixed(2)}\t${r.spread}\t${r.vol.toFixed(0)}\t${r.diff.toFixed(2)}\t${r.stor.toFixed(1)}\n`; });
+  const blob=new Blob(["\uFEFF"+tsv],{type:'application/vnd.ms-excel'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`psv_${currentRange}_${new Date().toISOString().slice(0,10)}.xls`;
+  a.click();
+}
+
+/* ══ CONTROLS ══ */
+function setRange(btn,range){
+  currentRange=range;
+  document.querySelectorAll('.rtab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const sub={'1G':'Dati orari oggi','1S':'Ultimi 7 giorni','1M':'30 giorni','3M':'3 mesi','1A':'1 anno'}[range];
+  document.getElementById('chartSub').textContent=sub+' · GME/Snam · €/MWh';
+  document.getElementById('tableSubTitle').textContent='Dati '+sub.toLowerCase();
+  rebuildAll();buildTable();
+}
+function setProduct(btn,p){
+  document.querySelectorAll('[data-p]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const titles={spot:'Day-Ahead Spot',wda:'Within-Day',bal:'Balance Month',q1:'Quarterly'};
+  document.getElementById('chartTitle').textContent='PSV Gas — '+titles[p];
+  if(mainChart)mainChart.destroy();buildMain();
+}
+function toggleOverlay(btn,hub){
+  btn.classList.toggle('on');
+  // visual only — TTF is primary overlay
+}
+function toggleTTF(btn){
+  showTTF=!showTTF;
+  btn.classList.toggle('active',showTTF);
+  if(mainChart)mainChart.destroy();buildMain();
+}
+function toggleForecast(btn){
+  showForecast=!showForecast;
+  btn.classList.toggle('active',showForecast);
+  if(mainChart)mainChart.destroy();buildMain();
+}
+function resetZoom(){if(mainChart)mainChart.resetZoom();}
+function selKpi(card,key){
+  document.querySelectorAll('.kpi-card').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel');
+}
+
+/* ══ AI ══ */
+async function askAI(prompt){
+  const resp=document.getElementById('aiResp');
+  const load=document.getElementById('aiLoad');
+  load.style.display='flex';resp.innerHTML='';
+
+  const system=`Sei un esperto analista del mercato gas italiano e europeo. Rispondi in italiano, preciso, professionale, max 5 frasi.
+Dati attuali (${new Date().toLocaleDateString('it-IT')}):
+- PSV Day-Ahead: 38.45 €/MWh (−0.8%)
+- TTF Amsterdam: 42.18 €/MWh (+0.4%)
+- Spread PSV–TTF: −3.73 €/MWh (Italia sconta rispetto al hub europeo)
+- NBP UK: 43.10 €/MWh | ZEE-H: 41.85 €/MWh
+- Stoccaggi UE: 62.4% (Italia 71.2%, Germania 58.8%)
+- Flussi Tarvisio: 84.2 Mm³/g (+2.1%)
+- PSV Balance Month: 40.20 | Summer Strip: 33.50 | Winter Strip: 46.10 €/MWh
+Usa **grassetto** per dati chiave. Usa \`backtick\` per valori numerici importanti.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    load.style.display='none';
+    const text=data.content?.[0]?.text||'Risposta non disponibile.';
+    resp.innerHTML=text
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/`([^`]+)`/g,'<span class="hl">$1</span>')
+      .replace(/\n/g,'<br>');
+  }catch(e){
+    load.style.display='none';
+    resp.innerHTML='⚠️ Errore di connessione.';
+  }
+}
+function sendCustom(){
+  const i=document.getElementById('aiCustom');
+  const q=i.value.trim();if(!q)return;
+  askAI(q);i.value='';
+}
+
+/* ══ REBUILD ══ */
+function rebuildAll(){
+  if(mainChart)mainChart.destroy();
+  if(spreadChartInst)spreadChartInst.destroy();
+  if(storageChartInst)storageChartInst.destroy();
+  buildMain();buildSpread();buildStorage();
+}
+
+/* ══ INIT ══ */
+buildMain();buildSpread();buildStorage();buildCurve();buildNews();buildTable();
+setTimeout(()=>askAI('Fornisci una breve analisi del mercato PSV gas oggi: prezzo spot, spread TTF, stoccaggi e outlook a breve termine.'),900);
+</script>
+</body>
+</html>
