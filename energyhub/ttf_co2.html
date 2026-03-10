@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnergyHub — TTF / CO₂ [DEMO]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --accent:#0EA5E9;--green:#10B981;--red:#F43F5E;--orange:#F97316;
+  --yellow:#FBBF24;--purple:#8B5CF6;
+  --ttf:#F97316;--ttf-dim:rgba(249,115,22,0.10);
+  --co2:#10B981;--co2-dim:rgba(16,185,129,0.10);
+  --brent:#FBBF24;--nbp:#8B5CF6;
+  --font-h:'Plus Jakarta Sans',sans-serif;
+  --font-b:'Inter',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --r4:4px;--r8:8px;--r12:12px;--r16:16px;
+  --tr:0.18s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#070A0E;--s1:#0D1118;--s2:#121820;--s3:#18202A;
+  --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.12);--b3:rgba(255,255,255,0.20);
+  --t1:#F0F5FA;--t2:#9DB3C8;--t3:#607A94;
+  --nav:#090D13;--sh:0 4px 24px rgba(0,0,0,0.5);
+}
+[data-theme="light"]{
+  --bg:#EDF2FA;--s1:#FFFFFF;--s2:#F2F6FB;--s3:#E5EDF7;
+  --b1:rgba(0,0,0,0.08);--b2:rgba(0,0,0,0.13);--b3:rgba(0,0,0,0.22);
+  --t1:#0A1624;--t2:#2C4860;--t3:#547690;
+  --nav:#FFFFFF;--sh:0 4px 20px rgba(0,0,0,0.07);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--t1);font-family:var(--font-b);font-size:14px;line-height:1.5;overflow:hidden;transition:background var(--tr),color var(--tr);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--nav);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--b1);text-decoration:none}
+.sb-logo-mark{width:28px;height:28px;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.22);border-radius:var(--r8);display:flex;align-items:center;justify-content:center}
+.sb-logo-mark svg{width:15px;height:15px}
+.sb-logo-name{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.sb-logo-name em{font-style:normal;color:var(--accent)}
+.sb-sec{padding:20px 14px 6px;font-family:var(--font-m);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-weight:500}
+.sb-nav{list-style:none;padding:0 8px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13.5px;font-weight:500;transition:all var(--tr);margin-bottom:1px;text-decoration:none;white-space:nowrap}
+.sb-item:hover{background:var(--s2);color:var(--t1)}
+.sb-item.active{background:var(--ttf-dim);color:var(--ttf);border:1px solid rgba(249,115,22,0.18)}
+.sb-ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;font-family:var(--font-m);font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:var(--accent);color:#fff}
+.sb-badge.o{background:var(--orange)}
+.sb-bottom{margin-top:auto;padding:12px 8px;border-top:1px solid var(--b1);display:flex;flex-direction:column;gap:2px}
+.sb-theme-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13px;font-weight:500;border:none;background:transparent;font-family:var(--font-b);width:100%;text-align:left;transition:all var(--tr)}
+.sb-theme-btn:hover{background:var(--s2);color:var(--t1)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;transition:background var(--tr)}
+.sb-user:hover{background:var(--s2)}
+.sb-avatar{width:28px;height:28px;background:linear-gradient(135deg,var(--ttf),var(--co2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--font-h);flex-shrink:0}
+.sb-user-name{font-size:12.5px;font-weight:600;color:var(--t1);line-height:1.2}
+.sb-user-plan{font-family:var(--font-m);font-size:9.5px;color:var(--ttf)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:54px;flex-shrink:0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:var(--nav);border-bottom:1px solid var(--b1);gap:16px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t3)}
+.breadcrumb a{color:var(--t3);text-decoration:none;transition:color var(--tr)}
+.breadcrumb a:hover{color:var(--t2)}
+.bc-sep{opacity:0.4}
+.live-chip{display:flex;align-items:center;gap:5px;background:var(--ttf-dim);border:1px solid rgba(249,115,22,0.2);border-radius:100px;padding:3px 10px;font-family:var(--font-m);font-size:10px;color:var(--ttf)}
+.ldot{width:5px;height:5px;background:var(--ttf);border-radius:50%;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:6px 13px;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);font-size:13px;font-weight:500;font-family:var(--font-b);cursor:pointer;transition:all var(--tr)}
+.tb-btn:hover{background:var(--s2);color:var(--t1);border-color:var(--b3)}
+.tb-btn.primary{background:var(--ttf);border-color:transparent;color:#fff}
+.tb-btn.primary:hover{filter:brightness(1.1)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+
+/* COMMODITY TABS */
+.comm-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.comm-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r12);padding:13px 15px;cursor:pointer;transition:all var(--tr);position:relative;overflow:hidden}
+.comm-card:hover{border-color:var(--b2);transform:translateY(-1px)}
+.comm-card.sel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.comm-card.sel.c-ttf::after{background:var(--ttf)}
+.comm-card.sel.c-co2::after{background:var(--co2)}
+.comm-card.sel.c-nbp::after{background:var(--nbp)}
+.comm-card.sel.c-brent::after{background:var(--brent)}
+.comm-card.sel.c-coal::after{background:#94A3B8}
+.comm-card.sel.c-psv::after{background:var(--accent)}
+.cc-exch{font-family:var(--font-m);font-size:9.5px;color:var(--t3);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px}
+.cc-name{font-family:var(--font-h);font-size:12.5px;font-weight:700;color:var(--t1);margin-bottom:6px}
+.cc-price{font-family:var(--font-m);font-size:19px;font-weight:700;letter-spacing:-0.5px;line-height:1}
+.cc-unit{font-family:var(--font-m);font-size:10px;color:var(--t3);margin-top:2px}
+.cc-delta{font-family:var(--font-m);font-size:11px;font-weight:500;margin-top:4px}
+.up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--t3)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r12);padding:11px 16px}
+.filter-label{font-family:var(--font-m);font-size:10.5px;color:var(--t3);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap}
+.filter-sep{width:1px;height:20px;background:var(--b2);flex-shrink:0}
+.pill-group{display:flex;gap:3px}
+.pill{padding:5px 12px;border-radius:100px;font-family:var(--font-m);font-size:11.5px;font-weight:500;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--t2);transition:all var(--tr)}
+.pill:hover{color:var(--t1);border-color:var(--b3)}
+.pill.on{background:var(--ttf);border-color:var(--ttf);color:#fff}
+.pill.on.g{background:var(--co2);border-color:var(--co2)}
+.filter-spacer{flex:1}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r16)}
+.ph{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1)}
+.ph-title{font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.ph-sub{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-top:2px}
+.p-btn{padding:5px 11px;border:1px solid var(--b2);border-radius:var(--r4);background:transparent;color:var(--t2);font-family:var(--font-m);font-size:11px;cursor:pointer;transition:all var(--tr)}
+.p-btn:hover{background:var(--s2);color:var(--t1)}
+.p-btn.on{background:var(--ttf-dim);border-color:rgba(249,115,22,0.3);color:var(--ttf)}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.col-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+
+/* CHART */
+.chart-wrap{position:relative;width:100%;display:block}
+.chart-wrap canvas{display:block;width:100%!important}
+
+/* CORR TABLE */
+.corr-table{width:100%;border-collapse:collapse}
+.corr-table th{font-family:var(--font-m);font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--b2);background:var(--s2);font-weight:500}
+.corr-table td{padding:8px 12px;border-bottom:1px solid var(--b1);font-size:12px;color:var(--t2)}
+.corr-table tr:last-child td{border-bottom:none}
+.corr-table tr:hover td{background:var(--s2)}
+.corr-cell{display:inline-block;padding:3px 8px;border-radius:4px;font-family:var(--font-m);font-size:11.5px;font-weight:600;min-width:48px;text-align:center}
+
+/* FORWARD TABLE */
+.fwd-table{width:100%;border-collapse:collapse}
+.fwd-table th{font-family:var(--font-m);font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--b2);background:var(--s2);font-weight:500;white-space:nowrap}
+.fwd-table td{padding:8px 12px;border-bottom:1px solid var(--b1);font-size:12px;color:var(--t2);white-space:nowrap}
+.fwd-table tr:last-child td{border-bottom:none}
+.fwd-table tr:hover td{background:var(--s2)}
+.fwd-val{font-family:var(--font-m);font-size:12.5px;font-weight:500;color:var(--t1)}
+.fwd-ttf{color:var(--ttf)!important}
+.fwd-co2{color:var(--co2)!important}
+
+/* EUA REGISTRY */
+.eua-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 18px}
+.eua-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r8);padding:11px 13px}
+.eua-label{font-family:var(--font-m);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+.eua-val{font-family:var(--font-h);font-size:18px;font-weight:800;color:var(--t1);letter-spacing:-0.5px}
+.eua-sub{font-family:var(--font-m);font-size:10.5px;color:var(--t2);margin-top:2px}
+.eua-delta{font-family:var(--font-m);font-size:11px;margin-top:4px}
+
+/* NEWS */
+.news-item{display:flex;gap:12px;padding:10px 18px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background var(--tr)}
+.news-item:last-child{border-bottom:none}
+.news-item:hover{background:var(--s2)}
+.ni-time{font-family:var(--font-m);font-size:11px;color:var(--t3);width:38px;flex-shrink:0;padding-top:1px}
+.ni-tag{font-family:var(--font-m);font-size:10px;letter-spacing:0.4px;text-transform:uppercase;color:var(--ttf);margin-bottom:3px;font-weight:500}
+.ni-tag.co2{color:var(--co2)}
+.ni-text{font-size:12.5px;color:var(--t2);line-height:1.5}
+
+/* AI BOX */
+.ai-box{background:var(--s1);border:1px solid rgba(249,115,22,0.25);border-radius:var(--r16)}
+.ai-box-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--b1);background:var(--s2);border-radius:var(--r16) var(--r16) 0 0}
+.ai-box-title{display:flex;align-items:center;gap:8px;font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1)}
+.ai-chip{display:flex;align-items:center;gap:5px;background:var(--ttf-dim);border:1px solid rgba(249,115,22,0.2);border-radius:100px;padding:3px 10px;font-family:var(--font-m);font-size:10px;color:var(--ttf)}
+.ai-body{display:flex;gap:0;min-height:130px}
+.ai-resp{flex:1;padding:14px 18px;font-size:13.5px;color:var(--t2);line-height:1.7;background:var(--s2)}
+.ai-resp strong{color:var(--t1);font-weight:600}
+.ai-resp .hl{background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);border-radius:4px;padding:1px 6px;font-family:var(--font-m);font-size:12px;color:var(--ttf)}
+.ai-dots{display:flex;gap:4px;align-items:center}
+.ai-dot{width:6px;height:6px;background:var(--ttf);border-radius:50%;animation:aiD 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aiD{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.ai-qs{width:260px;flex-shrink:0;border-left:1px solid var(--b1);padding:14px 16px;display:flex;flex-direction:column;gap:6px;background:var(--s1)}
+.ai-qs-lbl{font-family:var(--font-m);font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:2px}
+.ai-q{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);font-size:12px;color:var(--t2);cursor:pointer;transition:all var(--tr);font-family:var(--font-b);text-align:left;line-height:1.4}
+.ai-q:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
+.ai-input-row{display:flex;gap:6px;margin-top:2px}
+.ai-input{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);padding:7px 10px;font-size:12px;color:var(--t1);font-family:var(--font-b);outline:none;transition:border-color var(--tr)}
+.ai-input:focus{border-color:var(--ttf)}
+.ai-input::placeholder{color:var(--t3)}
+.ai-send{width:32px;height:32px;background:var(--ttf);border:none;border-radius:var(--r8);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0}
+.ai-send:hover{filter:brightness(1.1)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="energyhub.html" class="sb-logo">
+    <div class="sb-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2.2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <span class="sb-logo-name">Energy<em>Hub</em></span>
+  </a>
+  <div class="sb-sec">Principale</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="dashboard.html"><span class="sb-ico">⚡</span>Dashboard</a></li>
+    <li><a class="sb-item" href="pun.html"><span class="sb-ico">📈</span>Prezzi PUN</a></li>
+    <li><a class="sb-item" href="psv.html"><span class="sb-ico">🔵</span>PSV Gas</a></li>
+    <li><a class="sb-item" href="forecast.html"><span class="sb-ico">🤖</span>Forecast AI<span class="sb-badge">New</span></a></li>
+  </ul>
+  <div class="sb-sec">Mercati</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="capacity.html"><span class="sb-ico">📊</span>Capacity Market</a></li>
+    <li><a class="sb-item" href="dispacciamento.html"><span class="sb-ico">🔄</span>Dispacciamento</a></li>
+    <li><a class="sb-item active" href="#"><span class="sb-ico">🌍</span>TTF / CO₂</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📉</span>Fondamentali</a></li>
+  </ul>
+  <div class="sb-sec">Strumenti</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="#"><span class="sb-ico">📋</span>Oneri ARERA</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🔌</span>CTE Calculator</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">💡</span>Comparatore</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📰</span>News<span class="sb-badge o">4</span></a></li>
+  </ul>
+  <div class="sb-bottom">
+    <button class="sb-theme-btn" id="themeToggle"><span id="themeIcon">☀️</span><span id="themeLabel">Tema Chiaro</span></button>
+    <div class="sb-user" onclick="toggleUserMenu()" style="cursor:pointer">
+      <div class="sb-avatar" id="sbAvatar">DU</div>
+      <div><div class="sb-user-name" id="sbUserName">Demo User</div><div class="sb-user-plan" id="sbUserPlan">PRO · attivo</div></div>
+      <span style="margin-left:auto;color:var(--t3);font-size:11px">⌄</span>
+    </div>
+    <div id="userMenu" style="display:none;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);padding:4px;margin:4px 0 0">
+      <div onclick="logout()" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r4);font-size:13px;color:#F43F5E;cursor:pointer" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background=''">🚪 Disconnetti</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">
+        <a href="energyhub.html">EnergyHub</a><span class="bc-sep">/</span>
+        <a href="dashboard.html">Dashboard</a><span class="bc-sep">/</span>
+        <span style="color:var(--t1);font-weight:500">TTF / CO₂</span>
+      </div>
+      <div class="live-chip"><div class="ldot"></div>ICE · EEX · Live</div>
+    </div>
+    <div class="topbar-right">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--t2)" id="currentDate"></span>
+      <button class="tb-btn" onclick="exportCSV()">⬇ CSV</button>
+      <button class="tb-btn" onclick="exportExcel()">⬇ Excel</button>
+      <button class="tb-btn primary" onclick="askAI('Analisi completa mercati TTF gas e CO₂ EUA oggi: prezzi, trend, correlazioni e impatto sui prezzi elettrici italiani.')">✦ Analisi AI</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Commodity cards -->
+    <div class="comm-row">
+      <div class="comm-card c-ttf sel" onclick="selComm(this,'TTF')" id="cardTTF">
+        <div class="cc-exch">ICE · Amsterdam</div>
+        <div class="cc-name">TTF Day-Ahead</div>
+        <div class="cc-price" style="color:var(--ttf)">42.18</div>
+        <div class="cc-unit">€/MWh</div>
+        <div class="cc-delta up">▲ +0.4% · +0.18</div>
+      </div>
+      <div class="comm-card c-co2 sel" onclick="selComm(this,'CO2')" id="cardCO2">
+        <div class="cc-exch">EEX · Francoforte</div>
+        <div class="cc-name">EUA CO₂ Spot</div>
+        <div class="cc-price" style="color:var(--co2)">68.72</div>
+        <div class="cc-unit">€/tCO₂</div>
+        <div class="cc-delta up">▲ +1.1% · +0.75</div>
+      </div>
+      <div class="comm-card c-nbp" onclick="selComm(this,'NBP')" id="cardNBP">
+        <div class="cc-exch">ICE · Londra</div>
+        <div class="cc-name">NBP Day-Ahead</div>
+        <div class="cc-price" style="color:var(--nbp)">43.10</div>
+        <div class="cc-unit">€/MWh</div>
+        <div class="cc-delta dn">▼ −0.2%</div>
+      </div>
+      <div class="comm-card c-brent" onclick="selComm(this,'BRENT')" id="cardBRENT">
+        <div class="cc-exch">ICE · Brent</div>
+        <div class="cc-name">Brent Crude Oil</div>
+        <div class="cc-price" style="color:var(--brent)">82.40</div>
+        <div class="cc-unit">$/bbl</div>
+        <div class="cc-delta dn">▼ −0.6%</div>
+      </div>
+      <div class="comm-card c-coal" onclick="selComm(this,'COAL')" id="cardCOAL">
+        <div class="cc-exch">ICE · Rotterdam</div>
+        <div class="cc-name">API2 Carbon Coal</div>
+        <div class="cc-price" style="color:#94A3B8">112.50</div>
+        <div class="cc-unit">$/t</div>
+        <div class="cc-delta neu">→ +0.1%</div>
+      </div>
+      <div class="comm-card c-psv" onclick="selComm(this,'PSV')" id="cardPSV">
+        <div class="cc-exch">GME · Milano</div>
+        <div class="cc-name">PSV Day-Ahead</div>
+        <div class="cc-price" style="color:var(--accent)">38.45</div>
+        <div class="cc-unit">€/MWh</div>
+        <div class="cc-delta dn">▼ −0.8%</div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-label">Range</span>
+      <div class="pill-group">
+        <button class="pill" onclick="setRange(this,'1S')">7gg</button>
+        <button class="pill on" onclick="setRange(this,'1M')">30gg</button>
+        <button class="pill" onclick="setRange(this,'3M')">3 mesi</button>
+        <button class="pill" onclick="setRange(this,'1A')">1 anno</button>
+        <button class="pill" onclick="setRange(this,'3A')">3 anni</button>
+      </div>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Overlay</span>
+      <div class="pill-group">
+        <button class="pill on" onclick="toggleLayer(this,'TTF')" data-l="TTF">TTF</button>
+        <button class="pill on g" onclick="toggleLayer(this,'CO2')" data-l="CO2">CO₂</button>
+        <button class="pill" onclick="toggleLayer(this,'NBP')" data-l="NBP">NBP</button>
+        <button class="pill" onclick="toggleLayer(this,'PSV')" data-l="PSV">PSV</button>
+      </div>
+      <div class="filter-spacer"></div>
+      <button class="p-btn" onclick="rebuildCharts()">↺ Aggiorna</button>
+    </div>
+
+    <!-- Main chart + Correlations -->
+    <div class="col-2-1">
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title" id="mainChartTitle">TTF & CO₂ — Ultimi 30 giorni</div><div class="ph-sub" id="mainChartSub">Prezzi normalizzati · doppio asse · fonte ICE/EEX</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="p-btn on" id="dualAxisBtn" onclick="toggleDualAxis(this)">Doppio asse</button>
+            <button class="p-btn" onclick="askAI('Analizza la correlazione tra TTF e CO₂ EUA negli ultimi 30 giorni: sono correlati positivamente? Cosa guida i movimenti?')">✦ AI</button>
+          </div>
+        </div>
+        <div style="padding:16px 18px 12px">
+          <div class="chart-wrap" style="height:260px"><canvas id="mainChart" style="height:260px!important"></canvas></div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 18px 14px;border-top:1px solid var(--b1);flex-wrap:wrap" id="mainLegend"></div>
+      </div>
+
+      <!-- Correlations -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Matrice Correlazioni</div><div class="ph-sub">Pearson · ultimi 30 giorni</div></div>
+          <button class="p-btn" onclick="askAI('Spiega le correlazioni tra TTF, CO₂, Brent e PUN: quali sono le relazioni più forti e come influenzano il prezzo elettrico italiano?')">✦ AI</button>
+        </div>
+        <div style="overflow-x:auto;padding:4px 0 8px">
+          <table class="corr-table" id="corrTable">
+            <thead><tr><th></th><th>TTF</th><th>CO₂</th><th>NBP</th><th>Brent</th><th>PUN</th></tr></thead>
+            <tbody id="corrBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CO2 EUA section + Forward curve -->
+    <div class="two-col">
+
+      <!-- EUA registry -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Mercato EUA CO₂</div><div class="ph-sub">EU Emissions Trading System · EEX</div></div>
+          <button class="p-btn" onclick="askAI('Analizza il mercato EUA CO₂: il prezzo a 68.72 €/tCO₂ è alto o basso storicamente? Quali fattori lo influenzano?')">✦ AI</button>
+        </div>
+        <div class="eua-grid">
+          <div class="eua-card">
+            <div class="eua-label">EUA Spot</div>
+            <div class="eua-val" style="color:var(--co2)">68.72</div>
+            <div class="eua-sub">€/tCO₂</div>
+            <div class="eua-delta up">▲ +1.1%</div>
+          </div>
+          <div class="eua-card">
+            <div class="eua-label">EUA Dec-25</div>
+            <div class="eua-val" style="color:var(--co2)">70.15</div>
+            <div class="eua-sub">€/tCO₂ futures</div>
+            <div class="eua-delta up">▲ +0.8%</div>
+          </div>
+          <div class="eua-card">
+            <div class="eua-label">EUA Dec-26</div>
+            <div class="eua-val" style="color:var(--co2)">74.80</div>
+            <div class="eua-sub">€/tCO₂ futures</div>
+            <div class="eua-delta up">▲ +0.5%</div>
+          </div>
+          <div class="eua-card">
+            <div class="eua-label">Volume oggi</div>
+            <div class="eua-val">28.4</div>
+            <div class="eua-sub">Mt CO₂ scambiati</div>
+            <div class="eua-delta neu">→ nella norma</div>
+          </div>
+          <div class="eua-card">
+            <div class="eua-label">Cap annuale</div>
+            <div class="eua-val">1.42</div>
+            <div class="eua-sub">GtCO₂ totale EU</div>
+            <div class="eua-delta dn">▼ −4.3% LRF</div>
+          </div>
+          <div class="eua-card">
+            <div class="eua-label">Surplus ETS</div>
+            <div class="eua-val">452</div>
+            <div class="eua-sub">MtCO₂ MSR</div>
+            <div class="eua-delta dn">▼ Assorbimento</div>
+          </div>
+        </div>
+        <div style="padding:8px 18px 14px">
+          <div class="chart-wrap" style="height:130px"><canvas id="co2Chart" style="height:130px!important"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Forward curve TTF -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Curva Forward TTF</div><div class="ph-sub">Prezzi mensili · ICE · €/MWh</div></div>
+          <div style="display:flex;gap:5px">
+            <button class="p-btn on" id="fwdTTF" onclick="switchFwd(this,'TTF')">TTF</button>
+            <button class="p-btn" id="fwdCO2" onclick="switchFwd(this,'CO2')">CO₂</button>
+          </div>
+        </div>
+        <div style="padding:12px 18px 10px">
+          <div class="chart-wrap" style="height:160px"><canvas id="fwdChart" style="height:160px!important"></canvas></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="fwd-table">
+            <thead><tr><th>Scadenza</th><th>TTF (€/MWh)</th><th>CO₂ (€/t)</th><th>Spread TTF–PSV</th><th>Var. TTF</th></tr></thead>
+            <tbody id="fwdTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Volatility chart + News -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Volatilità Storica 30gg</div><div class="ph-sub">% annualizzata · TTF vs CO₂ vs Brent</div></div>
+          <button class="p-btn" onclick="askAI('Analizza la volatilità del TTF e del CO₂: quale mercato è più volatile e quali eventi hanno causato i picchi?')">✦ AI</button>
+        </div>
+        <div style="padding:16px 18px 14px">
+          <div class="chart-wrap" style="height:200px"><canvas id="volChart" style="height:200px!important"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">News Energia & Clima</div><div class="ph-sub">Ultime 24 ore · fonti verificate</div></div>
+          <button class="p-btn">Tutte →</button>
+        </div>
+        <div id="newsFeed"></div>
+      </div>
+    </div>
+
+    <!-- AI Box -->
+    <div class="ai-box">
+      <div class="ai-box-head">
+        <div class="ai-box-title"><span>✦</span> Analisi AI — TTF / CO₂ / Commodity</div>
+        <div class="ai-chip"><div class="ldot"></div>Claude · Mercati globali energia</div>
+      </div>
+      <div class="ai-body">
+        <div class="ai-resp" id="aiResp">
+          <div style="display:none;align-items:center;gap:6px" id="aiLoad"><div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>
+          Seleziona una domanda o scrivi la tua per analizzare i mercati gas europei e CO₂ con l'AI.
+        </div>
+        <div class="ai-qs">
+          <div class="ai-qs-lbl">Chiedi all'AI</div>
+          <button class="ai-q" onclick="askAI('Quanto incide un aumento del 10% del TTF sul prezzo del PUN italiano? Analizza la trasmissione gas-elettricità.')">⚡ Impatto TTF sul PUN italiano</button>
+          <button class="ai-q" onclick="askAI('Il prezzo CO₂ a 68.72 €/t rende lo switch gas-carbone conveniente in Europa? Analizza il coal-to-gas switching price.')">🔄 Coal-to-gas switching price</button>
+          <button class="ai-q" onclick="askAI('Quali sono i principali rischi geopolitici per il TTF nei prossimi 6 mesi? Considera Russia, LNG, stoccaggi e domanda Asia.')">🌍 Rischi geopolitici TTF</button>
+          <button class="ai-q" onclick="askAI('La curva forward TTF in contango o backwardation? Cosa indica la struttura della curva per i prezzi invernali?')">📅 Struttura curva forward TTF</button>
+          <div class="ai-input-row">
+            <input class="ai-input" id="aiCustom" placeholder="Scrivi la tua domanda…" onkeydown="if(event.key==='Enter')sendCustom()">
+            <button class="ai-send" onclick="sendCustom()">↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+/* ══ AUTH DEMO ══ */
+(function(){
+  const s=JSON.parse(localStorage.getItem('eh_session')||sessionStorage.getItem('eh_session')||'null')||{nome:'Demo',cognome:'User',initials:'DU',plan:'pro'};
+  const av=document.getElementById('sbAvatar'),nm=document.getElementById('sbUserName'),pl=document.getElementById('sbUserPlan');
+  if(av)av.textContent=s.initials||(s.nome||'D')[0].toUpperCase();
+  if(nm)nm.textContent=(s.nome||'Demo')+' '+(s.cognome||'User');
+  if(pl)pl.textContent=(s.plan||'pro').toUpperCase()+' · attivo';
+})();
+function toggleUserMenu(){const m=document.getElementById('userMenu');if(m)m.style.display=m.style.display==='none'?'block':'none';}
+function logout(){localStorage.removeItem('eh_session');sessionStorage.removeItem('eh_session');window.location.href='login.html';}
+
+/* ══ THEME ══ */
+const root=document.documentElement;
+root.setAttribute('data-theme',localStorage.getItem('eh-theme')||'dark');
+updateThemeBtn();
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const n=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',n);localStorage.setItem('eh-theme',n);updateThemeBtn();setTimeout(rebuildCharts,50);
+});
+function updateThemeBtn(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  document.getElementById('themeIcon').textContent=dark?'☀️':'🌙';
+  document.getElementById('themeLabel').textContent=dark?'Tema Chiaro':'Tema Scuro';
+}
+document.getElementById('currentDate').textContent=new Date().toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+
+/* ══ STATE ══ */
+let currentRange='1M', dualAxis=true, activeLayers=new Set(['TTF','CO2']), fwdProduct='TTF';
+let mainChartI=null, co2ChartI=null, fwdChartI=null, volChartI=null;
+
+function rnd(b,v){return+(b+(Math.random()-.5)*v).toFixed(2)}
+
+function genDates(range){
+  const n={'1S':7,'1M':30,'3M':90,'1A':365,'3A':1095}[range]||30;
+  const labels=[], dates=[];
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    labels.push(d.toLocaleDateString('it-IT',{day:'numeric',month:'short'}));
+    dates.push(d);
+  }
+  return{labels,n};
+}
+
+function cd(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  return{
+    grid:dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)',
+    tick:dark?'#607A94':'#2C4860',
+    tipBg:dark?'#121820':'#FFFFFF',
+    tipBord:dark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.13)',
+    tipText:dark?'#F0F5FA':'#0A1624',
+  };
+}
+
+/* ══ MAIN CHART ══ */
+function buildMainChart(){
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  const c=cd();
+  const {labels,n}=genDates(currentRange);
+
+  const SERIES={
+    TTF:{data:labels.map((_,i)=>rnd(42+Math.sin(i/8)*6,2)),color:'#F97316',yAxis:'y'},
+    CO2:{data:labels.map((_,i)=>rnd(68+Math.sin(i/10)*5,2)),color:'#10B981',yAxis:'y1'},
+    NBP:{data:labels.map((_,i)=>rnd(43+Math.sin(i/7)*5,2)),color:'#8B5CF6',yAxis:'y'},
+    PSV:{data:labels.map((_,i)=>rnd(38+Math.sin(i/9)*4,2)),color:'#0EA5E9',yAxis:'y'},
+  };
+
+  const datasets=Object.entries(SERIES)
+    .filter(([k])=>activeLayers.has(k))
+    .map(([k,s])=>({
+      label:k, data:s.data,
+      borderColor:s.color, borderWidth:2,
+      backgroundColor:'transparent',
+      tension:0.4, pointRadius:0, pointHoverRadius:5,
+      pointBackgroundColor:s.color,
+      yAxisID:dualAxis?s.yAxis:'y',
+    }));
+
+  mainChartI=new Chart(ctx,{
+    type:'line',data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,
+          titleFont:{family:"'Plus Jakarta Sans'",size:12,weight:'700'},
+          bodyFont:{family:"'JetBrains Mono'",size:11},padding:10,cornerRadius:8,
+          callbacks:{label:ctx=>{
+            const u=ctx.dataset.label==='CO2'?'€/tCO₂':'€/MWh';
+            return ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} ${u}`;
+          }}
+        }
+      },
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},maxTicksLimit:10}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}€/MWh`},position:'left'},
+        ...(dualAxis?{y1:{grid:{display:false},ticks:{color:'#10B981',font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}€/t`},position:'right'}}:{}),
+      }
+    }
+  });
+
+  document.getElementById('mainLegend').innerHTML=Object.entries(SERIES).map(([k,s])=>`
+    <div style="display:flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:11px;color:var(--t2);cursor:pointer;opacity:${activeLayers.has(k)?1:0.35}" onclick="toggleLayer(null,'${k}')">
+      <div style="width:16px;height:3px;border-radius:2px;background:${s.color}"></div>${k}
+    </div>`).join('');
+}
+
+/* ══ CO2 CHART ══ */
+function buildCO2Chart(){
+  const ctx=document.getElementById('co2Chart').getContext('2d');
+  const c=cd();
+  const {labels}=genDates('1M');
+  const data=labels.map((_,i)=>rnd(68+Math.sin(i/8)*4,1.5));
+  const grad=ctx.createLinearGradient(0,0,0,130);
+  grad.addColorStop(0,'rgba(16,185,129,0.25)');grad.addColorStop(1,'rgba(16,185,129,0)');
+  co2ChartI=new Chart(ctx,{
+    type:'line',data:{labels,datasets:[{label:'EUA CO₂',data,borderColor:'#10B981',borderWidth:2,backgroundColor:grad,fill:true,tension:0.4,pointRadius:0,pointHoverRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,padding:7,cornerRadius:7,bodyFont:{family:"'JetBrains Mono'",size:10},callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} €/tCO₂`}}},
+      scales:{x:{display:false},y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}€`},position:'right'}}}
+  });
+}
+
+/* ══ FORWARD CHART ══ */
+const MONTHS=['Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic','Gen 26','Feb 26','Mar 26'];
+const TTF_FWD=[42.18,40.50,38.20,35.80,34.10,37.40,43.80,48.20,49.50,46.80,44.20,42.90];
+const CO2_FWD=[68.72,69.50,70.20,71.00,71.80,72.50,73.20,74.00,74.80,75.50,76.20,76.80];
+
+function buildFwdChart(){
+  const ctx=document.getElementById('fwdChart').getContext('2d');
+  const c=cd();
+  const data=fwdProduct==='TTF'?TTF_FWD:CO2_FWD;
+  const color=fwdProduct==='TTF'?'#F97316':'#10B981';
+  const grad=ctx.createLinearGradient(0,0,0,160);
+  grad.addColorStop(0,fwdProduct==='TTF'?'rgba(249,115,22,0.20)':'rgba(16,185,129,0.20)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  if(fwdChartI)fwdChartI.destroy();
+  fwdChartI=new Chart(ctx,{
+    type:'line',data:{labels:MONTHS,datasets:[{label:fwdProduct,data,borderColor:color,borderWidth:2.5,backgroundColor:grad,fill:true,tension:0.3,pointRadius:3,pointBackgroundColor:color,pointBorderColor:root.getAttribute('data-theme')==='dark'?'#0D1118':'#fff',pointBorderWidth:2,pointHoverRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,padding:8,cornerRadius:8,bodyFont:{family:"'JetBrains Mono'",size:10},callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} ${fwdProduct==='TTF'?'€/MWh':'€/tCO₂'}`}}},
+      scales:{x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},maxRotation:45}},y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}€`},position:'right'}}}
+  });
+
+  document.getElementById('fwdTableBody').innerHTML=MONTHS.map((m,i)=>{
+    const spread=(TTF_FWD[i]-38.45).toFixed(2);
+    const prevTTF=i>0?TTF_FWD[i-1]:TTF_FWD[0];
+    const varTTF=(TTF_FWD[i]-prevTTF).toFixed(2);
+    return`<tr>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--t1);font-weight:500">${m} 2025</td>
+      <td class="fwd-val fwd-ttf">${TTF_FWD[i].toFixed(2)}</td>
+      <td class="fwd-val fwd-co2">${CO2_FWD[i].toFixed(2)}</td>
+      <td style="font-family:var(--font-m);font-size:11.5px;color:${parseFloat(spread)>=0?'var(--green)':'var(--red)'}">${parseFloat(spread)>=0?'+':''}${spread}</td>
+      <td style="font-family:var(--font-m);font-size:11.5px;color:${parseFloat(varTTF)>=0?'var(--green)':'var(--red)'}">${parseFloat(varTTF)>=0?'▲ +':'▼ '}${Math.abs(varTTF)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══ VOLATILITY CHART ══ */
+function buildVolChart(){
+  const ctx=document.getElementById('volChart').getContext('2d');
+  const c=cd();
+  const {labels}=genDates('3M');
+  volChartI=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'TTF Vol.',data:labels.map(()=>rnd(48,15)),borderColor:'#F97316',borderWidth:2,backgroundColor:'transparent',tension:0.4,pointRadius:0,pointHoverRadius:4},
+      {label:'CO₂ Vol.',data:labels.map(()=>rnd(32,10)),borderColor:'#10B981',borderWidth:2,backgroundColor:'transparent',tension:0.4,pointRadius:0,pointHoverRadius:4},
+      {label:'Brent Vol.',data:labels.map(()=>rnd(28,8)),borderColor:'#FBBF24',borderWidth:1.5,borderDash:[4,3],backgroundColor:'transparent',tension:0.4,pointRadius:0},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},boxWidth:12,boxHeight:3,padding:12}},
+        tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,padding:8,cornerRadius:8,bodyFont:{family:"'JetBrains Mono'",size:10},callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}}},
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},maxTicksLimit:8}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}%`},position:'right'}
+      }
+    }
+  });
+}
+
+/* ══ CORRELATIONS ══ */
+function buildCorrMatrix(){
+  const ASSETS=['TTF','CO₂','NBP','Brent','PUN'];
+  const MATRIX=[
+    [1.00, 0.78, 0.92, 0.45, 0.82],
+    [0.78, 1.00, 0.71, 0.38, 0.74],
+    [0.92, 0.71, 1.00, 0.42, 0.79],
+    [0.45, 0.38, 0.42, 1.00, 0.51],
+    [0.82, 0.74, 0.79, 0.51, 1.00],
+  ];
+  document.getElementById('corrBody').innerHTML=ASSETS.map((a,i)=>`
+    <tr>
+      <td style="font-weight:600;color:var(--t1);font-family:var(--font-m);font-size:11.5px">${a}</td>
+      ${MATRIX[i].map((v,j)=>{
+        const abs=Math.abs(v);
+        const bg=i===j?'rgba(96,122,148,0.15)':abs>0.8?'rgba(16,185,129,0.15)':abs>0.6?'rgba(251,191,36,0.12)':'rgba(244,63,94,0.10)';
+        const col=i===j?'var(--t3)':abs>0.8?'var(--green)':abs>0.6?'var(--yellow)':'var(--red)';
+        return`<td><span class="corr-cell" style="background:${bg};color:${col}">${v.toFixed(2)}</span></td>`;
+      }).join('')}
+    </tr>`).join('');
+}
+
+/* ══ NEWS ══ */
+const NEWS=[
+  {time:'11:30',tag:'TTF',text:'IEA rivede al rialzo domanda gas Europa 2025: stoccaggi potrebbero non raggiungere target 90%',co2:false},
+  {time:'10:15',tag:'CO₂',text:'EUA in rialzo dopo vote PE su Market Stability Reserve: meno quote in circolazione dal 2026',co2:true},
+  {time:'09:40',tag:'LNG',text:'Qatar annuncia nuovo contratto LNG long-term con importatori europei: 15 anni da 2027',co2:false},
+  {time:'08:55',tag:'CO₂',text:'REPowerEU: Commissione UE conferma target 55% riduzione emissioni 2030 — EUA sostenuto',co2:true},
+  {time:'Ieri',tag:'TTF',text:'Norvegia: manutenzione Troll field rimanda di 2 settimane, flussi ridotti verso UK e Olanda',co2:false},
+];
+function buildNews(){
+  document.getElementById('newsFeed').innerHTML=NEWS.map(n=>`
+    <div class="news-item">
+      <div class="ni-time">${n.time}</div>
+      <div>
+        <div class="ni-tag ${n.co2?'co2':''}">${n.tag}</div>
+        <div class="ni-text">${n.text}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══ CONTROLS ══ */
+function selComm(card,key){
+  document.querySelectorAll('.comm-card').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel');
+}
+function setRange(btn,r){
+  currentRange=r;
+  document.querySelectorAll('.pill-group .pill').forEach(b=>{if(['7gg','30gg','3 mesi','1 anno','3 anni'].some(x=>b.textContent.includes(x.split(' ')[0])))b.classList.remove('on');});
+  btn.classList.add('on');
+  document.getElementById('mainChartTitle').textContent=`TTF & CO₂ — ${btn.textContent}`;
+  rebuildCharts();
+}
+function toggleLayer(btn,key){
+  if(activeLayers.has(key))activeLayers.delete(key);
+  else activeLayers.add(key);
+  if(btn){btn.classList.toggle('on',activeLayers.has(key));}
+  if(mainChartI)mainChartI.destroy();
+  buildMainChart();
+}
+function toggleDualAxis(btn){
+  dualAxis=!dualAxis;btn.classList.toggle('on',dualAxis);
+  if(mainChartI)mainChartI.destroy();buildMainChart();
+}
+function switchFwd(btn,p){
+  fwdProduct=p;
+  document.querySelectorAll('#fwdTTF,#fwdCO2').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  buildFwdChart();
+}
+
+function rebuildCharts(){
+  [mainChartI,co2ChartI,volChartI].forEach(c=>{if(c)c.destroy();});
+  buildMainChart();buildCO2Chart();buildVolChart();
+}
+
+/* ══ EXPORT ══ */
+function exportCSV(){
+  let csv='Scadenza,TTF (€/MWh),CO₂ (€/t),Spread TTF-PSV\n';
+  MONTHS.forEach((m,i)=>{csv+=`${m} 2025,${TTF_FWD[i].toFixed(2)},${CO2_FWD[i].toFixed(2)},${(TTF_FWD[i]-38.45).toFixed(2)}\n`;});
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`ttf_co2_forward_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+function exportExcel(){
+  let tsv='Scadenza\tTTF (€/MWh)\tCO₂ (€/t)\tSpread TTF-PSV\n';
+  MONTHS.forEach((m,i)=>{tsv+=`${m} 2025\t${TTF_FWD[i].toFixed(2)}\t${CO2_FWD[i].toFixed(2)}\t${(TTF_FWD[i]-38.45).toFixed(2)}\n`;});
+  const blob=new Blob(["\uFEFF"+tsv],{type:'application/vnd.ms-excel'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`ttf_co2_forward_${new Date().toISOString().slice(0,10)}.xls`;a.click();
+}
+
+/* ══ AI ══ */
+async function askAI(prompt){
+  const resp=document.getElementById('aiResp');
+  const load=document.getElementById('aiLoad');
+  load.style.display='flex';resp.innerHTML='';resp.appendChild(load);load.style.display='flex';
+  const system=`Sei un esperto dei mercati energetici globali (gas, CO₂, petrolio). Rispondi in italiano, preciso, max 5 frasi.
+Dati attuali:
+- TTF Day-Ahead: 42.18 €/MWh (+0.4%) | NBP: 43.10 | PSV: 38.45 (spread TTF-PSV: −3.73)
+- EUA CO₂ Spot: 68.72 €/tCO₂ (+1.1%) | EUA Dec-25: 70.15 | EUA Dec-26: 74.80
+- Brent: 82.40 $/bbl | Coal API2: 112.50 $/t
+- Curva TTF: contango invernale (Apr 42.18 → Nov 48.20 → Dec 49.50)
+- Volatilità TTF 30gg: 48% ann. | Volatilità CO₂: 32% ann.
+- Correlazione TTF-PUN: 0.82 | Correlazione CO₂-PUN: 0.74
+Usa **grassetto** per dati chiave. Usa \`backtick\` per valori numerici.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    load.style.display='none';
+    const text=data.content?.[0]?.text||'Risposta non disponibile.';
+    resp.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<span class="hl">$1</span>').replace(/\n/g,'<br>');
+  }catch(e){load.style.display='none';resp.innerHTML='⚠️ Errore di connessione.';}
+}
+function sendCustom(){const i=document.getElementById('aiCustom');const q=i.value.trim();if(!q)return;askAI(q);i.value='';}
+
+/* ══ INIT ══ */
+buildMainChart();buildCO2Chart();buildFwdChart();buildVolChart();buildCorrMatrix();buildNews();
+</script>
+</body>
+</html>

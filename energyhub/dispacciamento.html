@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnergyHub — Dispacciamento [DEMO]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --accent:#0EA5E9;--green:#10B981;--red:#F43F5E;--orange:#F97316;
+  --yellow:#FBBF24;--purple:#8B5CF6;
+  --disp:#06B6D4;--disp-dim:rgba(6,182,212,0.10);
+  --mgp:#0EA5E9;--mi:#10B981;--msd:#F97316;--mb:#A855F7;
+  --font-h:'Plus Jakarta Sans',sans-serif;
+  --font-b:'Inter',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --r4:4px;--r8:8px;--r12:12px;--r16:16px;
+  --tr:0.18s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#060B10;--s1:#0C1219;--s2:#111A24;--s3:#172230;
+  --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.12);--b3:rgba(255,255,255,0.20);
+  --t1:#EFF5FB;--t2:#9DB4CC;--t3:#5E7D9A;
+  --nav:#080E14;--sh:0 4px 24px rgba(0,0,0,0.5);
+}
+[data-theme="light"]{
+  --bg:#EDF3FA;--s1:#FFFFFF;--s2:#F2F7FC;--s3:#E5EFF8;
+  --b1:rgba(0,0,0,0.08);--b2:rgba(0,0,0,0.13);--b3:rgba(0,0,0,0.22);
+  --t1:#0A1828;--t2:#2C4A65;--t3:#557894;
+  --nav:#FFFFFF;--sh:0 4px 20px rgba(0,0,0,0.07);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--t1);font-family:var(--font-b);font-size:14px;line-height:1.5;overflow:hidden;transition:background var(--tr),color var(--tr);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--nav);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--b1);text-decoration:none}
+.sb-logo-mark{width:28px;height:28px;background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.22);border-radius:var(--r8);display:flex;align-items:center;justify-content:center}
+.sb-logo-mark svg{width:15px;height:15px}
+.sb-logo-name{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.sb-logo-name em{font-style:normal;color:var(--accent)}
+.sb-sec{padding:20px 14px 6px;font-family:var(--font-m);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-weight:500}
+.sb-nav{list-style:none;padding:0 8px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13.5px;font-weight:500;transition:all var(--tr);margin-bottom:1px;text-decoration:none;white-space:nowrap}
+.sb-item:hover{background:var(--s2);color:var(--t1)}
+.sb-item.active{background:var(--disp-dim);color:var(--disp);border:1px solid rgba(6,182,212,0.18)}
+.sb-ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;font-family:var(--font-m);font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:var(--accent);color:#fff}
+.sb-badge.o{background:var(--orange)}
+.sb-bottom{margin-top:auto;padding:12px 8px;border-top:1px solid var(--b1);display:flex;flex-direction:column;gap:2px}
+.sb-theme-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13px;font-weight:500;border:none;background:transparent;font-family:var(--font-b);width:100%;text-align:left;transition:all var(--tr)}
+.sb-theme-btn:hover{background:var(--s2);color:var(--t1)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;transition:background var(--tr)}
+.sb-user:hover{background:var(--s2)}
+.sb-avatar{width:28px;height:28px;background:linear-gradient(135deg,var(--disp),var(--accent));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--font-h);flex-shrink:0}
+.sb-user-name{font-size:12.5px;font-weight:600;color:var(--t1);line-height:1.2}
+.sb-user-plan{font-family:var(--font-m);font-size:9.5px;color:var(--disp)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:54px;flex-shrink:0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:var(--nav);border-bottom:1px solid var(--b1);gap:16px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t3)}
+.breadcrumb a{color:var(--t3);text-decoration:none;transition:color var(--tr)}
+.breadcrumb a:hover{color:var(--t2)}
+.bc-sep{opacity:0.4}
+.live-chip{display:flex;align-items:center;gap:5px;background:var(--disp-dim);border:1px solid rgba(6,182,212,0.2);border-radius:100px;padding:3px 10px;font-family:var(--font-m);font-size:10px;color:var(--disp)}
+.ldot{width:5px;height:5px;background:var(--disp);border-radius:50%;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:6px 13px;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);font-size:13px;font-weight:500;font-family:var(--font-b);cursor:pointer;transition:all var(--tr)}
+.tb-btn:hover{background:var(--s2);color:var(--t1);border-color:var(--b3)}
+.tb-btn.primary{background:var(--disp);border-color:transparent;color:#fff}
+.tb-btn.primary:hover{filter:brightness(1.1)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+
+/* MERCATO TABS */
+.mkt-tabs{display:flex;gap:8px}
+.mkt-tab{flex:1;padding:12px 16px;border-radius:var(--r12);border:1px solid var(--b1);background:var(--s1);cursor:pointer;transition:all var(--tr);text-align:left}
+.mkt-tab:hover{border-color:var(--b2);transform:translateY(-1px)}
+.mkt-tab.active{border-width:1.5px}
+.mkt-tab.mgp.active{background:rgba(14,165,233,0.07);border-color:rgba(14,165,233,0.35)}
+.mkt-tab.mi.active{background:rgba(16,185,129,0.07);border-color:rgba(16,185,129,0.35)}
+.mkt-tab.msd.active{background:rgba(249,115,22,0.07);border-color:rgba(249,115,22,0.35)}
+.mkt-tab.mb.active{background:rgba(168,85,247,0.07);border-color:rgba(168,85,247,0.35)}
+.mt-label{font-family:var(--font-m);font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.mt-name{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:2px}
+.mt-price{font-family:var(--font-m);font-size:18px;font-weight:700;letter-spacing:-0.5px}
+.mt-delta{font-family:var(--font-m);font-size:11px;margin-top:2px}
+.mt-sub{font-family:var(--font-m);font-size:10px;color:var(--t3);margin-top:3px}
+.up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--t3)}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kpi-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r12);padding:13px 16px;transition:all var(--tr);position:relative;overflow:hidden}
+.kpi-card:hover{border-color:var(--b2);transform:translateY(-1px)}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-card.c-disp::after{background:var(--disp)}
+.kpi-card.c-green::after{background:var(--green)}
+.kpi-card.c-red::after{background:var(--red)}
+.kpi-card.c-orange::after{background:var(--orange)}
+.kpi-card.c-purple::after{background:var(--purple)}
+.kpi-lbl{font-family:var(--font-m);font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+.kpi-val{font-family:var(--font-h);font-size:22px;font-weight:800;letter-spacing:-0.8px;color:var(--t1);line-height:1}
+.kpi-unit{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-top:2px}
+.kpi-delta{font-family:var(--font-m);font-size:11px;font-weight:500;margin-top:4px}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r16)}
+.ph{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1)}
+.ph-title{font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.ph-sub{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-top:2px}
+.p-btn{padding:5px 11px;border:1px solid var(--b2);border-radius:var(--r4);background:transparent;color:var(--t2);font-family:var(--font-m);font-size:11px;cursor:pointer;transition:all var(--tr)}
+.p-btn:hover{background:var(--s2);color:var(--t1)}
+.p-btn.on{background:var(--disp-dim);border-color:rgba(6,182,212,0.3);color:var(--disp)}
+.pb{padding:14px 18px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.col-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r12);padding:11px 16px}
+.filter-label{font-family:var(--font-m);font-size:10.5px;color:var(--t3);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap}
+.filter-sep{width:1px;height:20px;background:var(--b2);flex-shrink:0}
+.pill-group{display:flex;gap:3px}
+.pill{padding:5px 12px;border-radius:100px;font-family:var(--font-m);font-size:11.5px;font-weight:500;cursor:pointer;border:1px solid var(--b2);background:transparent;color:var(--t2);transition:all var(--tr)}
+.pill:hover{color:var(--t1);border-color:var(--b3)}
+.pill.on{background:var(--disp);border-color:var(--disp);color:#fff}
+.filter-spacer{flex:1}
+
+/* CHART */
+.chart-wrap{position:relative;width:100%;display:block}
+.chart-wrap canvas{display:block;width:100%!important}
+
+/* ORDINI TABLE */
+.ord-table{width:100%;border-collapse:collapse}
+.ord-table th{font-family:var(--font-m);font-size:10.5px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);padding:8px 14px;text-align:left;border-bottom:1px solid var(--b2);background:var(--s2);font-weight:500;white-space:nowrap}
+.ord-table td{padding:8px 14px;border-bottom:1px solid var(--b1);font-size:12.5px;color:var(--t2);white-space:nowrap}
+.ord-table tr:last-child td{border-bottom:none}
+.ord-table tr:hover td{background:var(--s2)}
+.ot-ora{font-family:var(--font-m);font-size:11.5px;color:var(--t1);font-weight:500}
+.ot-price{font-family:var(--font-m);font-size:12.5px;font-weight:600}
+.ot-up{color:var(--green)}.ot-dn{color:var(--red)}
+.ord-badge{display:inline-block;padding:2px 8px;border-radius:100px;font-family:var(--font-m);font-size:10px;font-weight:500}
+.ob-acc{background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.2)}
+.ob-off{background:rgba(249,115,22,0.12);color:var(--orange);border:1px solid rgba(249,115,22,0.2)}
+.ob-part{background:rgba(14,165,233,0.12);color:var(--accent);border:1px solid rgba(14,165,233,0.2)}
+
+/* SALDO ZONA */
+.zona-row{display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--b1)}
+.zona-row:last-child{border-bottom:none}
+.zona-row:hover{background:var(--s2)}
+.zr-name{font-family:var(--font-h);font-size:13px;font-weight:700;color:var(--t1);width:80px;flex-shrink:0}
+.zr-bar-wrap{flex:1;height:8px;background:var(--s3);border-radius:4px;overflow:hidden;position:relative}
+.zr-bar-pos{position:absolute;left:50%;height:100%;border-radius:0 4px 4px 0}
+.zr-bar-neg{position:absolute;right:50%;height:100%;border-radius:4px 0 0 4px}
+.zr-val{font-family:var(--font-m);font-size:12px;font-weight:500;width:80px;text-align:right;flex-shrink:0}
+.zr-type{font-family:var(--font-m);font-size:10px;width:70px;flex-shrink:0}
+
+/* LOAD CHART AREA */
+.load-legend{display:flex;gap:16px;padding:10px 18px 12px;border-top:1px solid var(--b1);flex-wrap:wrap}
+.ll-item{display:flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:11px;color:var(--t2)}
+.ll-sw{width:16px;height:3px;border-radius:2px}
+
+/* AI BOX */
+.ai-box{background:var(--s1);border:1px solid rgba(6,182,212,0.25);border-radius:var(--r16)}
+.ai-box-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--b1);background:var(--s2);border-radius:var(--r16) var(--r16) 0 0}
+.ai-box-title{display:flex;align-items:center;gap:8px;font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1)}
+.ai-chip{display:flex;align-items:center;gap:5px;background:var(--disp-dim);border:1px solid rgba(6,182,212,0.2);border-radius:100px;padding:3px 10px;font-family:var(--font-m);font-size:10px;color:var(--disp)}
+.ai-body{display:flex;gap:0;min-height:130px}
+.ai-resp{flex:1;padding:14px 18px;font-size:13.5px;color:var(--t2);line-height:1.7;background:var(--s2)}
+.ai-resp strong{color:var(--t1);font-weight:600}
+.ai-resp .hl{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.2);border-radius:4px;padding:1px 6px;font-family:var(--font-m);font-size:12px;color:var(--disp)}
+.ai-dots{display:flex;gap:4px;align-items:center}
+.ai-dot{width:6px;height:6px;background:var(--disp);border-radius:50%;animation:aiD 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aiD{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.ai-qs{width:260px;flex-shrink:0;border-left:1px solid var(--b1);padding:14px 16px;display:flex;flex-direction:column;gap:6px;background:var(--s1)}
+.ai-qs-lbl{font-family:var(--font-m);font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:2px}
+.ai-q{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);font-size:12px;color:var(--t2);cursor:pointer;transition:all var(--tr);font-family:var(--font-b);text-align:left;line-height:1.4}
+.ai-q:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
+.ai-input-row{display:flex;gap:6px;margin-top:2px}
+.ai-input{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);padding:7px 10px;font-size:12px;color:var(--t1);font-family:var(--font-b);outline:none;transition:border-color var(--tr)}
+.ai-input:focus{border-color:var(--disp)}
+.ai-input::placeholder{color:var(--t3)}
+.ai-send{width:32px;height:32px;background:var(--disp);border:none;border-radius:var(--r8);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0}
+.ai-send:hover{filter:brightness(1.1)}
+
+/* EXPORT */
+.tfoot{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--b1);background:var(--s2)}
+.tfoot-info{font-family:var(--font-m);font-size:11px;color:var(--t3)}
+.exp-btns{display:flex;gap:6px}
+.exp-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);font-family:var(--font-m);font-size:11px;cursor:pointer;transition:all var(--tr)}
+.exp-btn:hover{background:var(--s1);color:var(--t1)}
+.exp-btn.primary{background:var(--disp);border-color:transparent;color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="energyhub.html" class="sb-logo">
+    <div class="sb-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2.2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <span class="sb-logo-name">Energy<em>Hub</em></span>
+  </a>
+  <div class="sb-sec">Principale</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="dashboard.html"><span class="sb-ico">⚡</span>Dashboard</a></li>
+    <li><a class="sb-item" href="pun.html"><span class="sb-ico">📈</span>Prezzi PUN</a></li>
+    <li><a class="sb-item" href="psv.html"><span class="sb-ico">🔵</span>PSV Gas</a></li>
+    <li><a class="sb-item" href="forecast.html"><span class="sb-ico">🤖</span>Forecast AI<span class="sb-badge">New</span></a></li>
+  </ul>
+  <div class="sb-sec">Mercati</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="capacity.html"><span class="sb-ico">📊</span>Capacity Market</a></li>
+    <li><a class="sb-item active" href="#"><span class="sb-ico">🔄</span>Dispacciamento</a></li>
+    <li><a class="sb-item" href="ttf_co2.html"><span class="sb-ico">🌍</span>TTF / CO₂</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📉</span>Fondamentali</a></li>
+  </ul>
+  <div class="sb-sec">Strumenti</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="#"><span class="sb-ico">📋</span>Oneri ARERA</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🔌</span>CTE Calculator</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">💡</span>Comparatore</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📰</span>News<span class="sb-badge o">4</span></a></li>
+  </ul>
+  <div class="sb-bottom">
+    <button class="sb-theme-btn" id="themeToggle"><span id="themeIcon">☀️</span><span id="themeLabel">Tema Chiaro</span></button>
+    <div class="sb-user" onclick="toggleUserMenu()" style="cursor:pointer">
+      <div class="sb-avatar" id="sbAvatar">DU</div>
+      <div><div class="sb-user-name" id="sbUserName">Demo User</div><div class="sb-user-plan" id="sbUserPlan">PRO · attivo</div></div>
+      <span style="margin-left:auto;color:var(--t3);font-size:11px">⌄</span>
+    </div>
+    <div id="userMenu" style="display:none;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);padding:4px;margin:4px 0 0">
+      <div onclick="logout()" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r4);font-size:13px;color:#F43F5E;cursor:pointer" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background=''">🚪 Disconnetti</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">
+        <a href="energyhub.html">EnergyHub</a><span class="bc-sep">/</span>
+        <a href="dashboard.html">Dashboard</a><span class="bc-sep">/</span>
+        <span style="color:var(--t1);font-weight:500">Dispacciamento</span>
+      </div>
+      <div class="live-chip"><div class="ldot"></div>Terna · Live MSD</div>
+    </div>
+    <div class="topbar-right">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--t2)" id="currentDate"></span>
+      <button class="tb-btn" onclick="exportCSV()">⬇ CSV</button>
+      <button class="tb-btn" onclick="exportExcel()">⬇ Excel</button>
+      <button class="tb-btn primary" onclick="askAI('Analisi completa del mercato di dispacciamento italiano oggi: prezzi MGP, MI, MSD, sbilanciamenti e outlook.')">✦ Analisi AI</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Mercato tabs -->
+    <div class="mkt-tabs">
+      <div class="mkt-tab mgp active" onclick="selMercato(this,'MGP')" id="tabMGP">
+        <div class="mt-label">MGP</div>
+        <div class="mt-name">Mercato Giorno Prima</div>
+        <div class="mt-price" style="color:var(--mgp)">114.82 <span style="font-size:12px">€/MWh</span></div>
+        <div class="mt-delta up">▲ +0.4%</div>
+        <div class="mt-sub">Sessione chiusa · 12:00</div>
+      </div>
+      <div class="mkt-tab mi" onclick="selMercato(this,'MI')" id="tabMI">
+        <div class="mt-label">MI</div>
+        <div class="mt-name">Mercato Infragiornaliero</div>
+        <div class="mt-price" style="color:var(--mi)">116.40 <span style="font-size:12px">€/MWh</span></div>
+        <div class="mt-delta up">▲ +1.4% vs MGP</div>
+        <div class="mt-sub">MI-3 attivo · 15:00–18:00</div>
+      </div>
+      <div class="mkt-tab msd" onclick="selMercato(this,'MSD')" id="tabMSD">
+        <div class="mt-label">MSD</div>
+        <div class="mt-name">Mercato Servizi Dispacc.</div>
+        <div class="mt-price" style="color:var(--msd)">128.50 <span style="font-size:12px">€/MWh</span></div>
+        <div class="mt-delta dn">▼ Offerta aumento</div>
+        <div class="mt-sub">Prezzo medio accettato</div>
+      </div>
+      <div class="mkt-tab mb" onclick="selMercato(this,'MB')" id="tabMB">
+        <div class="mt-label">MB</div>
+        <div class="mt-name">Mercato Bilanciamento</div>
+        <div class="mt-price" style="color:var(--mb)">142.30 <span style="font-size:12px">€/MWh</span></div>
+        <div class="mt-delta dn">▼ Sbilanciamento ↑</div>
+        <div class="mt-sub">Prezzo sbilanciamento</div>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi-card c-disp">
+        <div class="kpi-lbl">Domanda attuale</div>
+        <div class="kpi-val">38<span style="font-size:15px;font-weight:600">.4</span></div>
+        <div class="kpi-unit">GW · ore 14:00</div>
+        <div class="kpi-delta up">▲ +1.2 GW vs previsto</div>
+      </div>
+      <div class="kpi-card c-green">
+        <div class="kpi-lbl">Riserva primaria</div>
+        <div class="kpi-val">2<span style="font-size:15px;font-weight:600">.8</span></div>
+        <div class="kpi-unit">GW abilitati</div>
+        <div class="kpi-delta neu">→ Adeguata</div>
+      </div>
+      <div class="kpi-card c-orange">
+        <div class="kpi-lbl">Sbilanciamento netto</div>
+        <div class="kpi-val">+412</div>
+        <div class="kpi-unit">MWh · sistema lungo</div>
+        <div class="kpi-delta up">▲ Surplus produzione</div>
+      </div>
+      <div class="kpi-card c-red">
+        <div class="kpi-lbl">Costo sbilanciamento</div>
+        <div class="kpi-val">142<span style="font-size:15px;font-weight:600">.3</span></div>
+        <div class="kpi-unit">€/MWh · single price</div>
+        <div class="kpi-delta dn">▼ +24% vs MGP</div>
+      </div>
+      <div class="kpi-card c-purple">
+        <div class="kpi-lbl">Riserva secondaria</div>
+        <div class="kpi-val">1<span style="font-size:15px;font-weight:600">.4</span></div>
+        <div class="kpi-unit">GW attivata oggi</div>
+        <div class="kpi-delta neu">→ Nella norma</div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-label">Orizzonte</span>
+      <div class="pill-group">
+        <button class="pill on" onclick="setRange(this,'oggi')">Oggi</button>
+        <button class="pill" onclick="setRange(this,'7gg')">7 giorni</button>
+        <button class="pill" onclick="setRange(this,'30gg')">30 giorni</button>
+      </div>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Fascia</span>
+      <div class="pill-group">
+        <button class="pill on" onclick="setFascia(this,'F0')">F0</button>
+        <button class="pill" onclick="setFascia(this,'F1')">F1 Peak</button>
+        <button class="pill" onclick="setFascia(this,'F2')">F2</button>
+        <button class="pill" onclick="setFascia(this,'F3')">F3 Off-peak</button>
+      </div>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Zona</span>
+      <div class="pill-group">
+        <button class="pill on" onclick="setZona(this,'NORD')">Nord</button>
+        <button class="pill" onclick="setZona(this,'CNORD')">C.Nord</button>
+        <button class="pill" onclick="setZona(this,'SUD')">Sud</button>
+        <button class="pill" onclick="setZona(this,'SICI')">Sicilia</button>
+      </div>
+      <div class="filter-spacer"></div>
+      <button class="p-btn" onclick="rebuildCharts()">↺ Aggiorna</button>
+    </div>
+
+    <!-- Main charts row -->
+    <div class="col-2-1">
+      <!-- Prezzi mercati -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title" id="mainChartTitle">Prezzi MGP / MI / MSD — Oggi</div><div class="ph-sub">€/MWh · confronto mercati · ore 00–24</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="p-btn on" id="overlayBtn" onclick="toggleOverlay(this)">Overlay</button>
+            <button class="p-btn" onclick="askAI('Analizza lo spread tra MGP, MI e MSD oggi: cosa indica la differenza di prezzo tra i mercati di dispacciamento?')">✦ AI</button>
+          </div>
+        </div>
+        <div style="padding:16px 18px 10px">
+          <div class="chart-wrap" style="height:240px"><canvas id="prezziChart" style="height:240px!important"></canvas></div>
+        </div>
+        <div class="load-legend" id="prezziLegend"></div>
+      </div>
+
+      <!-- Saldo produzione / consumo -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Saldo Zonale MSD</div><div class="ph-sub">MW accettati per zona</div></div>
+          <button class="p-btn" onclick="askAI('Analizza il saldo MSD per zona: quali zone hanno maggiore necessità di regolazione e perché?')">✦ AI</button>
+        </div>
+        <div id="saldoZone" style="padding:6px 0 8px"></div>
+      </div>
+    </div>
+
+    <!-- Curva del carico + Ordini MSD -->
+    <div class="two-col">
+      <!-- Load curve -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Curva del Carico</div><div class="ph-sub">GW · Previsto vs Effettivo vs Rinnovabili</div></div>
+          <button class="p-btn" onclick="askAI('Analizza la curva del carico di oggi: ci sono scostamenti significativi tra previsto ed effettivo? Quali le cause?')">✦ AI</button>
+        </div>
+        <div style="padding:16px 18px 10px">
+          <div class="chart-wrap" style="height:200px"><canvas id="loadChart" style="height:200px!important"></canvas></div>
+        </div>
+        <div class="load-legend">
+          <div class="ll-item"><div class="ll-sw" style="background:#0EA5E9"></div>Carico effettivo</div>
+          <div class="ll-item"><div class="ll-sw" style="background:rgba(14,165,233,0.4);border:1px dashed #0EA5E9"></div>Previsto MGP</div>
+          <div class="ll-item"><div class="ll-sw" style="background:#10B981"></div>Rinnovabili</div>
+          <div class="ll-item"><div class="ll-sw" style="background:#F97316"></div>Termoelettrico</div>
+        </div>
+      </div>
+
+      <!-- Ordini MSD accettati -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Ordini MSD Accettati</div><div class="ph-sub">Ultime offerte · aumento e diminuzione</div></div>
+          <div style="display:flex;gap:5px">
+            <button class="p-btn on" id="msdAcc" onclick="filterOrdini(this,'tutti')">Tutti</button>
+            <button class="p-btn" id="msdUp" onclick="filterOrdini(this,'aumento')">↑ Aumento</button>
+            <button class="p-btn" id="msdDn" onclick="filterOrdini(this,'diminuzione')">↓ Diminu.</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;max-height:280px;overflow-y:auto">
+          <table class="ord-table">
+            <thead><tr><th>Ora</th><th>Unità</th><th>Zona</th><th>MW</th><th>Prezzo</th><th>Tipo</th><th>Stato</th></tr></thead>
+            <tbody id="ordiniBody"></tbody>
+          </table>
+        </div>
+        <div class="tfoot">
+          <span class="tfoot-info" id="ordiniInfo">24 ordini oggi</span>
+          <div class="exp-btns">
+            <button class="exp-btn" onclick="exportCSV()">⬇ CSV</button>
+            <button class="exp-btn primary" onclick="exportCSV('full')">⬇ Export</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mix generazione + Sbilanciamento chart -->
+    <div class="two-col">
+      <!-- Mix generazione -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Mix di Generazione</div><div class="ph-sub">GW per fonte · ora corrente</div></div>
+          <button class="p-btn" onclick="askAI('Analizza il mix di generazione elettrica italiano in questo momento: quali fonti stanno contribuendo di più e come influenzano il dispacciamento?')">✦ AI</button>
+        </div>
+        <div style="padding:16px 18px 14px">
+          <div class="chart-wrap" style="height:200px"><canvas id="mixChart" style="height:200px!important"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Sbilanciamento storico -->
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Sbilanciamento Orario</div><div class="ph-sub">MWh · sistema lungo (+) / corto (−)</div></div>
+          <button class="p-btn" onclick="askAI('Analizza il pattern di sbilanciamento orario: ci sono pattern sistematici che indicano problemi di previsione?')">✦ AI</button>
+        </div>
+        <div style="padding:16px 18px 14px">
+          <div class="chart-wrap" style="height:200px"><canvas id="sbilChart" style="height:200px!important"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Box -->
+    <div class="ai-box">
+      <div class="ai-box-head">
+        <div class="ai-box-title"><span>✦</span> Analisi AI Dispacciamento</div>
+        <div class="ai-chip"><div class="ldot"></div>Claude · Esperto mercati elettrici IT</div>
+      </div>
+      <div class="ai-body">
+        <div class="ai-resp" id="aiResp">
+          <div style="display:none;align-items:center;gap:6px" id="aiLoad"><div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>
+          Seleziona una domanda rapida o scrivi la tua per analizzare il mercato di dispacciamento con l'AI.
+        </div>
+        <div class="ai-qs">
+          <div class="ai-qs-lbl">Chiedi all'AI</div>
+          <button class="ai-q" onclick="askAI('Cos\'è lo spread MGP-MSD e cosa indica un valore di +13.7 €/MWh? Analizza le implicazioni per i produttori.')">📊 Spread MGP–MSD: cosa significa?</button>
+          <button class="ai-q" onclick="askAI('Come funziona il meccanismo di sbilanciamento in Italia? Quali sono le penalità e come si calcola il prezzo?')">⚖️ Come funziona lo sbilanciamento</button>
+          <button class="ai-q" onclick="askAI('Le rinnovabili aumentano la volatilità del MSD? Analizza l\'impatto dell\'alta penetrazione solare ed eolica sul mercato di dispacciamento.')">🌱 Rinnovabili e volatilità MSD</button>
+          <button class="ai-q" onclick="askAI('Quali strategie usano i produttori termici per ottimizzare la partecipazione al MSD e massimizzare i ricavi?')">🏭 Strategie produttori nel MSD</button>
+          <div class="ai-input-row">
+            <input class="ai-input" id="aiCustom" placeholder="Scrivi la tua domanda…" onkeydown="if(event.key==='Enter')sendCustom()">
+            <button class="ai-send" onclick="sendCustom()">↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+/* ══ AUTH DEMO ══ */
+(function(){
+  const s=JSON.parse(localStorage.getItem('eh_session')||sessionStorage.getItem('eh_session')||'null')||{nome:'Demo',cognome:'User',initials:'DU',plan:'pro'};
+  const av=document.getElementById('sbAvatar'),nm=document.getElementById('sbUserName'),pl=document.getElementById('sbUserPlan');
+  if(av)av.textContent=s.initials||(s.nome||'D')[0].toUpperCase();
+  if(nm)nm.textContent=(s.nome||'Demo')+' '+(s.cognome||'User');
+  if(pl)pl.textContent=(s.plan||'pro').toUpperCase()+' · attivo';
+})();
+function toggleUserMenu(){const m=document.getElementById('userMenu');if(m)m.style.display=m.style.display==='none'?'block':'none';}
+function logout(){localStorage.removeItem('eh_session');sessionStorage.removeItem('eh_session');window.location.href='login.html';}
+
+/* ══ THEME ══ */
+const root=document.documentElement;
+root.setAttribute('data-theme',localStorage.getItem('eh-theme')||'dark');
+updateThemeBtn();
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const n=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',n);localStorage.setItem('eh-theme',n);
+  updateThemeBtn();setTimeout(rebuildCharts,50);
+});
+function updateThemeBtn(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  document.getElementById('themeIcon').textContent=dark?'☀️':'🌙';
+  document.getElementById('themeLabel').textContent=dark?'Tema Chiaro':'Tema Scuro';
+}
+document.getElementById('currentDate').textContent=new Date().toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+
+/* ══ STATE ══ */
+let currentMercato='MGP', showOverlay=true, currentRange='oggi', currentFascia='F0', currentZona='NORD', ordineFilter='tutti';
+let prezziChartI=null,loadChartI=null,mixChartI=null,sbilChartI=null;
+
+function rnd(b,v){return+(b+(Math.random()-.5)*v).toFixed(2)}
+
+/* ══ CHART CONFIG ══ */
+function cd(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  return{
+    grid:dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)',
+    tick:dark?'#5E7D9A':'#2C4A65',
+    tipBg:dark?'#111A24':'#FFFFFF',
+    tipBord:dark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.13)',
+    tipText:dark?'#EFF5FB':'#0A1828',
+  };
+}
+
+const HOURS=Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`);
+
+/* ══ PREZZI CHART ══ */
+function buildPrezziChart(){
+  const ctx=document.getElementById('prezziChart').getContext('2d');
+  const c=cd();
+  const mgp=HOURS.map((_,i)=>rnd(114+Math.sin(i/3)*8,3));
+  const mi=mgp.map(v=>rnd(v+1.8,2));
+  const msd=mgp.map(v=>rnd(v+13,5));
+  const mb=mgp.map(v=>rnd(v+27,8));
+
+  const sets=[
+    {label:'MGP',data:mgp,color:'#0EA5E9',show:true},
+    {label:'MI',data:mi,color:'#10B981',show:showOverlay},
+    {label:'MSD',data:msd,color:'#F97316',show:showOverlay},
+    {label:'MB',data:mb,color:'#A855F7',show:showOverlay},
+  ];
+
+  prezziChartI=new Chart(ctx,{
+    type:'line',
+    data:{labels:HOURS,datasets:sets.filter(s=>s.show).map(s=>({
+      label:s.label,data:s.data,borderColor:s.color,borderWidth:2,
+      backgroundColor:'transparent',tension:0.4,
+      pointRadius:0,pointHoverRadius:5,pointBackgroundColor:s.color,
+      pointBorderColor:root.getAttribute('data-theme')==='dark'?'#0C1219':'#fff',pointBorderWidth:2,
+    }))},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,
+          titleFont:{family:"'Plus Jakarta Sans'",size:12,weight:'700'},
+          bodyFont:{family:"'JetBrains Mono'",size:11},padding:10,cornerRadius:8,
+          callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} €/MWh`}}
+      },
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},maxTicksLimit:12}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v}€`},position:'right'}
+      }
+    }
+  });
+
+  document.getElementById('prezziLegend').innerHTML=sets.map(s=>`
+    <div class="ll-item"><div class="ll-sw" style="background:${s.color}"></div>${s.label}</div>`).join('');
+}
+
+/* ══ LOAD CHART ══ */
+function buildLoadChart(){
+  const ctx=document.getElementById('loadChart').getContext('2d');
+  const c=cd();
+  const eff=HOURS.map((_,i)=>rnd(34+Math.sin((i-6)/3.5)*6,1.5));
+  const prev=eff.map(v=>rnd(v,1));
+  const rinn=HOURS.map((_,i)=>rnd(12+Math.max(0,Math.sin((i-12)/4)*10),1.5));
+  const term=eff.map((v,i)=>+(v-rinn[i]-2).toFixed(1));
+  const gradR=ctx.createLinearGradient(0,0,0,200);
+  gradR.addColorStop(0,'rgba(16,185,129,0.20)');gradR.addColorStop(1,'rgba(16,185,129,0.00)');
+
+  loadChartI=new Chart(ctx,{
+    type:'line',
+    data:{labels:HOURS,datasets:[
+      {label:'Carico effettivo',data:eff,borderColor:'#0EA5E9',borderWidth:2.5,backgroundColor:'transparent',tension:0.4,pointRadius:0,pointHoverRadius:4},
+      {label:'Previsto MGP',data:prev,borderColor:'rgba(14,165,233,0.45)',borderWidth:1.5,borderDash:[5,3],backgroundColor:'transparent',tension:0.4,pointRadius:0},
+      {label:'Rinnovabili',data:rinn,borderColor:'#10B981',borderWidth:1.5,backgroundColor:gradR,fill:true,tension:0.4,pointRadius:0},
+      {label:'Termoelettrico',data:term,borderColor:'#F97316',borderWidth:1.5,backgroundColor:'transparent',tension:0.4,pointRadius:0},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,titleFont:{family:"'Plus Jakarta Sans'",size:11},bodyFont:{family:"'JetBrains Mono'",size:10},padding:8,cornerRadius:8,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} GW`}}},
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},maxTicksLimit:12}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v} GW`},position:'right',min:0}
+      }
+    }
+  });
+}
+
+/* ══ MIX CHART ══ */
+const MIX=[
+  {name:'CCGT/Gas',gw:14.2,color:'#F59E0B'},{name:'Idro',gw:8.8,color:'#0EA5E9'},
+  {name:'Solare',gw:7.4,color:'#FBBF24'},{name:'Eolico',gw:5.1,color:'#10B981'},
+  {name:'Nucleare FR',gw:2.1,color:'#8B5CF6'},{name:'Carbone',gw:1.2,color:'#6080A0'},
+  {name:'Import',gw:0.8,color:'#F97316'},{name:'Altro',gw:0.6,color:'#5E7D9A'},
+];
+function buildMixChart(){
+  const ctx=document.getElementById('mixChart').getContext('2d');
+  mixChartI=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:MIX.map(m=>m.name),datasets:[{data:MIX.map(m=>m.gw),backgroundColor:MIX.map(m=>m.color),borderWidth:2,borderColor:root.getAttribute('data-theme')==='dark'?'#0C1219':'#fff',hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{
+        legend:{display:true,position:'right',labels:{color:cd().tick,font:{family:"'JetBrains Mono'",size:9},boxWidth:9,boxHeight:9,padding:6}},
+        tooltip:{backgroundColor:cd().tipBg,borderColor:cd().tipBord,borderWidth:1,titleColor:cd().tipText,bodyColor:cd().tick,padding:8,cornerRadius:8,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed.toFixed(1)} GW`}}
+      }
+    }
+  });
+}
+
+/* ══ SBILANCIAMENTO CHART ══ */
+function buildSbilChart(){
+  const ctx=document.getElementById('sbilChart').getContext('2d');
+  const c=cd();
+  const data=HOURS.map(()=>rnd(0,600));
+  const colors=data.map(v=>v>=0?'rgba(16,185,129,0.65)':'rgba(244,63,94,0.65)');
+  sbilChartI=new Chart(ctx,{
+    type:'bar',
+    data:{labels:HOURS,datasets:[{label:'Sbilanciamento',data,backgroundColor:colors,borderRadius:2,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,padding:8,cornerRadius:8,bodyFont:{family:"'JetBrains Mono'",size:10},callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(0)} MWh (${ctx.parsed.y>=0?'lungo':'corto'})`}}},
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},maxTicksLimit:12}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:9},callback:v=>`${v} MWh`},position:'right'}
+      }
+    }
+  });
+}
+
+/* ══ SALDO ZONE ══ */
+const ZONE_SALDO=[
+  {name:'Nord',   mw:+820, tipo:'Aumento'},
+  {name:'C.Nord', mw:-340, tipo:'Diminu.'},
+  {name:'C.Sud',  mw:+180, tipo:'Aumento'},
+  {name:'Sud',    mw:-520, tipo:'Diminu.'},
+  {name:'Sicilia',mw:+90,  tipo:'Aumento'},
+  {name:'Sardegna',mw:-230,tipo:'Diminu.'},
+];
+function buildSaldoZone(){
+  const max=900;
+  document.getElementById('saldoZone').innerHTML=ZONE_SALDO.map(z=>{
+    const pct=Math.abs(z.mw)/max*45;
+    const pos=z.mw>=0;
+    const col=pos?'var(--green)':'var(--red)';
+    return`<div class="zona-row">
+      <div class="zr-name">${z.name}</div>
+      <div class="zr-bar-wrap">
+        ${pos?`<div class="zr-bar-pos" style="width:${pct}%;background:${col}"></div>`:''}
+        ${!pos?`<div class="zr-bar-neg" style="width:${pct}%;background:${col}"></div>`:''}
+      </div>
+      <div class="zr-val" style="color:${col}">${pos?'+':''}${z.mw} MW</div>
+      <div class="zr-type" style="font-family:var(--font-m);font-size:10px;color:${col}">${z.tipo}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══ ORDINI MSD ══ */
+const UNITA=['Enel Torrevaldaliga','Edison Torviscosa','A2A Cassano','ERG Priolo','Saras Sardegna','ENI Sarmato','Iren Torino','E.ON Fiume Santo'];
+let allOrdini=[];
+function genOrdini(){
+  allOrdini=[];
+  for(let i=0;i<24;i++){
+    const tipo=Math.random()>0.45?'aumento':'diminuzione';
+    const prezzo=tipo==='aumento'?rnd(128,18):rnd(88,15);
+    const stati=['accettato','accettato','accettato','parziale','rifiutato'];
+    allOrdini.push({
+      ora:HOURS[i],
+      unita:UNITA[i%UNITA.length],
+      zona:['NORD','CNORD','SUD','SICI'][Math.floor(Math.random()*4)],
+      mw:Math.round(rnd(200,160)),
+      prezzo,
+      tipo,
+      stato:stati[Math.floor(Math.random()*stati.length)],
+    });
+  }
+}
+function renderOrdini(rows){
+  document.getElementById('ordiniBody').innerHTML=rows.map(r=>{
+    const statoCls=r.stato==='accettato'?'ob-acc':r.stato==='parziale'?'ob-part':'ob-off';
+    const tipoCls=r.tipo==='aumento'?'ot-up':'ot-dn';
+    return`<tr>
+      <td class="ot-ora">${r.ora}</td>
+      <td style="font-size:12px;color:var(--t1);font-weight:500;max-width:130px;overflow:hidden;text-overflow:ellipsis">${r.unita}</td>
+      <td style="font-family:var(--font-m);font-size:11px;color:var(--disp)">${r.zona}</td>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--t1)">${r.mw}</td>
+      <td class="ot-price ${tipoCls}">${r.prezzo.toFixed(1)}</td>
+      <td style="font-family:var(--font-m);font-size:10.5px;color:${r.tipo==='aumento'?'var(--green)':'var(--red)'}">${r.tipo==='aumento'?'↑':'↓'} ${r.tipo}</td>
+      <td><span class="ord-badge ${statoCls}">${r.stato}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ordiniInfo').textContent=`${rows.length} ordini · ${rows.filter(r=>r.stato==='accettato').length} accettati`;
+}
+function filterOrdini(btn,f){
+  ordineFilter=f;
+  document.querySelectorAll('#msdAcc,#msdUp,#msdDn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const filtered=f==='tutti'?allOrdini:allOrdini.filter(r=>r.tipo===f);
+  renderOrdini(filtered);
+}
+
+/* ══ CONTROLS ══ */
+function selMercato(tab,m){
+  currentMercato=m;
+  document.querySelectorAll('.mkt-tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('mainChartTitle').textContent=`Prezzi ${m} — ${currentRange==='oggi'?'Oggi':'Storico'}`;
+  if(prezziChartI)prezziChartI.destroy();buildPrezziChart();
+}
+function toggleOverlay(btn){showOverlay=!showOverlay;btn.classList.toggle('on',showOverlay);if(prezziChartI)prezziChartI.destroy();buildPrezziChart();}
+function setRange(btn,r){currentRange=r;document.querySelectorAll('.pill').forEach(b=>{if(['oggi','7gg','30gg'].includes(b.textContent.toLowerCase().replace(' ',''))&&b.textContent!=='F0'&&b.textContent!=='F1'&&b.textContent!=='F2')b.classList.remove('on')});btn.classList.add('on');rebuildCharts();}
+function setFascia(btn,f){currentFascia=f;document.querySelectorAll('[onclick*="setFascia"]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+function setZona(btn,z){currentZona=z;document.querySelectorAll('[onclick*="setZona"]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+
+function rebuildCharts(){
+  [prezziChartI,loadChartI,mixChartI,sbilChartI].forEach(c=>{if(c)c.destroy();});
+  buildPrezziChart();buildLoadChart();buildMixChart();buildSbilChart();
+}
+
+/* ══ EXPORT ══ */
+function exportCSV(){
+  let csv='Ora,Unità,Zona,MW,Prezzo €/MWh,Tipo,Stato\n';
+  allOrdini.forEach(r=>{csv+=`${r.ora},${r.unita},${r.zona},${r.mw},${r.prezzo.toFixed(1)},${r.tipo},${r.stato}\n`;});
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`msd_ordini_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+function exportExcel(){
+  let tsv='Ora\tUnità\tZona\tMW\tPrezzo €/MWh\tTipo\tStato\n';
+  allOrdini.forEach(r=>{tsv+=`${r.ora}\t${r.unita}\t${r.zona}\t${r.mw}\t${r.prezzo.toFixed(1)}\t${r.tipo}\t${r.stato}\n`;});
+  const blob=new Blob(["\uFEFF"+tsv],{type:'application/vnd.ms-excel'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`msd_ordini_${new Date().toISOString().slice(0,10)}.xls`;a.click();
+}
+
+/* ══ AI ══ */
+async function askAI(prompt){
+  const resp=document.getElementById('aiResp');
+  const load=document.getElementById('aiLoad');
+  load.style.display='flex';resp.innerHTML='';resp.appendChild(load);load.style.display='flex';
+  const system=`Sei un esperto del mercato di dispacciamento elettrico italiano (Terna, GME). Rispondi in italiano, preciso, max 5 frasi.
+Dati attuali:
+- MGP: 114.82 €/MWh | MI: 116.40 €/MWh | MSD: 128.50 €/MWh | MB: 142.30 €/MWh
+- Spread MGP-MSD: +13.68 €/MWh | Spread MGP-MB: +27.48 €/MWh
+- Domanda attuale: 38.4 GW (+1.2 GW vs previsto) | Sbilanciamento: +412 MWh (sistema lungo)
+- Mix gen: Gas 14.2 GW, Idro 8.8 GW, Solare 7.4 GW, Eolico 5.1 GW
+- Riserva primaria: 2.8 GW | Riserva secondaria attivata: 1.4 GW
+- Zona con maggiore necessità: Sud (−520 MW MSD)
+Usa **grassetto** per dati chiave. Usa \`backtick\` per valori numerici.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    load.style.display='none';
+    const text=data.content?.[0]?.text||'Risposta non disponibile.';
+    resp.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<span class="hl">$1</span>').replace(/\n/g,'<br>');
+  }catch(e){load.style.display='none';resp.innerHTML='⚠️ Errore di connessione.';}
+}
+function sendCustom(){const i=document.getElementById('aiCustom');const q=i.value.trim();if(!q)return;askAI(q);i.value='';}
+
+/* ══ INIT ══ */
+genOrdini();renderOrdini(allOrdini);buildSaldoZone();
+buildPrezziChart();buildLoadChart();buildMixChart();buildSbilChart();
+</script>
+</body>
+</html>
