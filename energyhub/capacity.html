@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnergyHub — Capacity Market [DEMO]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --accent:#0EA5E9;--green:#10B981;--red:#F43F5E;--orange:#F97316;
+  --yellow:#FBBF24;--purple:#8B5CF6;
+  --terna:#F59E0B;--terna-dim:rgba(245,158,11,0.10);
+  --font-h:'Plus Jakarta Sans',sans-serif;
+  --font-b:'Inter',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --r4:4px;--r8:8px;--r12:12px;--r16:16px;
+  --tr:0.18s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#07090F;--s1:#0D1117;--s2:#131A24;--s3:#192130;
+  --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.12);--b3:rgba(255,255,255,0.20);
+  --t1:#F0F4FA;--t2:#9DB4CC;--t3:#6080A0;
+  --nav:#090D14;--sh:0 4px 24px rgba(0,0,0,0.5);
+}
+[data-theme="light"]{
+  --bg:#EEF3FB;--s1:#FFFFFF;--s2:#F3F7FC;--s3:#E6EFF8;
+  --b1:rgba(0,0,0,0.08);--b2:rgba(0,0,0,0.13);--b3:rgba(0,0,0,0.22);
+  --t1:#0B1929;--t2:#2D4A66;--t3:#587A96;
+  --nav:#FFFFFF;--sh:0 4px 20px rgba(0,0,0,0.07);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--t1);font-family:var(--font-b);font-size:14px;line-height:1.5;overflow:hidden;transition:background var(--tr),color var(--tr);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--nav);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--b1);text-decoration:none}
+.sb-logo-mark{width:28px;height:28px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.22);border-radius:var(--r8);display:flex;align-items:center;justify-content:center}
+.sb-logo-mark svg{width:15px;height:15px}
+.sb-logo-name{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.sb-logo-name em{font-style:normal;color:var(--accent)}
+.sb-sec{padding:20px 14px 6px;font-family:var(--font-m);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-weight:500}
+.sb-nav{list-style:none;padding:0 8px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13.5px;font-weight:500;transition:all var(--tr);margin-bottom:1px;text-decoration:none;white-space:nowrap}
+.sb-item:hover{background:var(--s2);color:var(--t1)}
+.sb-item.active{background:var(--terna-dim);color:var(--terna);border:1px solid rgba(245,158,11,0.18)}
+.sb-ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;font-family:var(--font-m);font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:var(--accent);color:#fff}
+.sb-badge.o{background:var(--orange)}
+.sb-bottom{margin-top:auto;padding:12px 8px;border-top:1px solid var(--b1);display:flex;flex-direction:column;gap:2px}
+.sb-theme-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--t2);font-size:13px;font-weight:500;border:none;background:transparent;font-family:var(--font-b);width:100%;text-align:left;transition:all var(--tr)}
+.sb-theme-btn:hover{background:var(--s2);color:var(--t1)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;transition:background var(--tr)}
+.sb-user:hover{background:var(--s2)}
+.sb-avatar{width:28px;height:28px;background:linear-gradient(135deg,var(--terna),var(--orange));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--font-h);flex-shrink:0}
+.sb-user-name{font-size:12.5px;font-weight:600;color:var(--t1);line-height:1.2}
+.sb-user-plan{font-family:var(--font-m);font-size:9.5px;color:var(--terna)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:54px;flex-shrink:0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:var(--nav);border-bottom:1px solid var(--b1);gap:16px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t3)}
+.breadcrumb a{color:var(--t3);text-decoration:none;transition:color var(--tr)}
+.breadcrumb a:hover{color:var(--t2)}
+.bc-sep{opacity:0.4}
+.live-chip{display:flex;align-items:center;gap:5px;background:var(--terna-dim);border:1px solid rgba(245,158,11,0.2);border-radius:100px;padding:3px 10px;font-family:var(--font-m);font-size:10px;color:var(--terna)}
+.ldot{width:5px;height:5px;background:var(--terna);border-radius:50%;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:6px 13px;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);font-size:13px;font-weight:500;font-family:var(--font-b);cursor:pointer;transition:all var(--tr)}
+.tb-btn:hover{background:var(--s2);color:var(--t1);border-color:var(--b3)}
+.tb-btn.primary{background:var(--terna);border-color:transparent;color:#fff}
+.tb-btn.primary:hover{filter:brightness(1.1)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kpi-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r12);padding:14px 16px;transition:all var(--tr);position:relative;overflow:hidden;cursor:default}
+.kpi-card:hover{border-color:var(--b2);transform:translateY(-1px);box-shadow:var(--sh)}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--terna)}
+.kpi-lbl{font-family:var(--font-m);font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.kpi-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.kpi-val{font-family:var(--font-h);font-size:22px;font-weight:800;letter-spacing:-0.8px;color:var(--t1);line-height:1}
+.kpi-unit{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-top:2px}
+.kpi-delta{font-family:var(--font-m);font-size:11px;font-weight:500;margin-top:4px}
+.up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--t3)}
+
+/* TABS */
+.tab-bar{display:flex;gap:2px;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r12);padding:4px;width:fit-content}
+.tab-btn{padding:7px 16px;border-radius:var(--r8);font-family:var(--font-m);font-size:12px;font-weight:500;cursor:pointer;color:var(--t2);border:none;background:transparent;transition:all var(--tr)}
+.tab-btn:hover{color:var(--t1)}
+.tab-btn.active{background:var(--s1);color:var(--t1);box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r16)}
+.ph{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1)}
+.ph-title{font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1);letter-spacing:-0.2px}
+.ph-sub{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-top:2px}
+.p-btn{padding:5px 11px;border:1px solid var(--b2);border-radius:var(--r4);background:transparent;color:var(--t2);font-family:var(--font-m);font-size:11px;cursor:pointer;transition:all var(--tr)}
+.p-btn:hover{background:var(--s2);color:var(--t1)}
+.p-btn.on{background:var(--terna-dim);border-color:rgba(245,158,11,0.3);color:var(--terna)}
+.pb{padding:14px 18px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.col-2-1{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+
+/* ASTA CARD */
+.asta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+.asta-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r12);padding:14px 16px;transition:all var(--tr);cursor:pointer;position:relative}
+.asta-card:hover{border-color:var(--b3);background:var(--s3)}
+.asta-card.active-card{border-color:rgba(245,158,11,0.4);background:var(--terna-dim)}
+.asta-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:var(--b2)}
+.asta-card.stato-conclusa::before{background:var(--green)}
+.asta-card.stato-in-corso::before{background:var(--terna);box-shadow:0 0 8px rgba(245,158,11,0.4);animation:glowPulse 2s infinite}
+.asta-card.stato-programmata::before{background:var(--t3)}
+@keyframes glowPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.ac-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ac-anno{font-family:var(--font-h);font-size:14px;font-weight:800;color:var(--t1)}
+.ac-stato{font-family:var(--font-m);font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:100px;text-transform:uppercase;letter-spacing:0.5px}
+.ac-stato.conclusa{background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.2)}
+.ac-stato.in-corso{background:rgba(245,158,11,0.12);color:var(--terna);border:1px solid rgba(245,158,11,0.2)}
+.ac-stato.programmata{background:rgba(96,128,160,0.12);color:var(--t3);border:1px solid rgba(96,128,160,0.2)}
+.ac-tipo{font-family:var(--font-m);font-size:10.5px;color:var(--t3);margin-bottom:6px}
+.ac-prezzo{font-family:var(--font-h);font-size:20px;font-weight:800;color:var(--terna);letter-spacing:-0.5px;margin-bottom:2px}
+.ac-prezzo-lbl{font-family:var(--font-m);font-size:10px;color:var(--t3)}
+.ac-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)}
+.ac-stat-val{font-family:var(--font-m);font-size:12px;color:var(--t1);font-weight:500}
+.ac-stat-lbl{font-family:var(--font-m);font-size:10px;color:var(--t3)}
+
+/* DETAIL SECTION */
+.detail-section{display:none}
+.detail-section.show{display:flex;flex-direction:column;gap:16px}
+
+/* CAPACITY TABLE */
+.cap-table{width:100%;border-collapse:collapse}
+.cap-table th{font-family:var(--font-m);font-size:10.5px;letter-spacing:0.5px;text-transform:uppercase;color:var(--t3);padding:9px 14px;text-align:left;border-bottom:1px solid var(--b2);background:var(--s2);font-weight:500;white-space:nowrap}
+.cap-table td{padding:9px 14px;border-bottom:1px solid var(--b1);font-size:12.5px;color:var(--t2);white-space:nowrap}
+.cap-table tr:last-child td{border-bottom:none}
+.cap-table tr:hover td{background:var(--s2)}
+.ct-name{font-weight:600;color:var(--t1)!important}
+.ct-val{font-family:var(--font-m);font-size:12px;color:var(--t1)!important;font-weight:500}
+.ct-terna{font-family:var(--font-m);font-size:11.5px;color:var(--terna)!important}
+.cap-badge{display:inline-block;padding:2px 8px;border-radius:100px;font-family:var(--font-m);font-size:10px;font-weight:500}
+.cb-new{background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.2)}
+.cb-exist{background:rgba(14,165,233,0.12);color:var(--accent);border:1px solid rgba(14,165,233,0.2)}
+.cb-foreign{background:rgba(139,92,246,0.12);color:var(--purple);border:1px solid rgba(139,92,246,0.2)}
+.cb-dsr{background:rgba(245,158,11,0.12);color:var(--terna);border:1px solid rgba(245,158,11,0.2)}
+
+/* ZONA MAP */
+.zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 18px}
+.zona-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r8);padding:11px 13px;transition:all var(--tr)}
+.zona-card:hover{border-color:var(--b2)}
+.zona-name{font-family:var(--font-h);font-size:12.5px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.zona-mw{font-family:var(--font-m);font-size:15px;font-weight:700;color:var(--terna);letter-spacing:-0.3px}
+.zona-prezzo{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-top:2px}
+.zona-bar{height:4px;background:var(--s3);border-radius:2px;margin-top:8px;overflow:hidden}
+.zona-bar-inner{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--terna),var(--orange))}
+
+/* TIMELINE */
+.timeline{padding:14px 18px;display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--b1)}
+.tl-item:last-child{border-bottom:none}
+.tl-left{display:flex;flex-direction:column;align-items:center;gap:0;width:40px;flex-shrink:0}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tl-line{width:2px;flex:1;background:var(--b1);margin:3px auto 0}
+.tl-date{font-family:var(--font-m);font-size:10px;color:var(--t3);text-align:center;margin-top:2px;line-height:1.3}
+.tl-body{}
+.tl-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.tl-desc{font-size:12px;color:var(--t2);line-height:1.5}
+.tl-tag{display:inline-block;font-family:var(--font-m);font-size:10px;color:var(--terna);background:var(--terna-dim);border:1px solid rgba(245,158,11,0.15);padding:1px 7px;border-radius:100px;margin-top:4px}
+
+/* AI BOX */
+.ai-box{background:var(--s1);border:1px solid rgba(245,158,11,0.25);border-radius:var(--r16)}
+.ai-box-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--b1);background:var(--s2);border-radius:var(--r16) var(--r16) 0 0}
+.ai-box-title{display:flex;align-items:center;gap:8px;font-family:var(--font-h);font-size:13.5px;font-weight:700;color:var(--t1)}
+.ai-chip{display:flex;align-items:center;gap:5px;background:var(--terna-dim);border:1px solid rgba(245,158,11,0.2);border-radius:100px;padding:3px 10px;font-family:var(--font-m);font-size:10px;color:var(--terna)}
+.ai-body{display:flex;gap:0}
+.ai-resp{flex:1;padding:14px 18px;font-size:13.5px;color:var(--t2);line-height:1.7;min-height:80px;background:var(--s2)}
+.ai-resp strong{color:var(--t1);font-weight:600}
+.ai-resp .hl{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:4px;padding:1px 6px;font-family:var(--font-m);font-size:12px;color:var(--terna)}
+.ai-dots{display:flex;gap:4px;align-items:center}
+.ai-dot{width:6px;height:6px;background:var(--terna);border-radius:50%;animation:aiD 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aiD{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.ai-qs{width:260px;flex-shrink:0;border-left:1px solid var(--b1);padding:14px 16px;display:flex;flex-direction:column;gap:6px;background:var(--s1)}
+.ai-qs-lbl{font-family:var(--font-m);font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:2px}
+.ai-q{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);font-size:12px;color:var(--t2);cursor:pointer;transition:all var(--tr);font-family:var(--font-b);text-align:left;line-height:1.4}
+.ai-q:hover{background:var(--s3);color:var(--t1);border-color:var(--b3)}
+.ai-input-row{display:flex;gap:6px;margin-top:2px}
+.ai-input{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);padding:7px 10px;font-size:12px;color:var(--t1);font-family:var(--font-b);outline:none;transition:border-color var(--tr)}
+.ai-input:focus{border-color:var(--terna)}
+.ai-input::placeholder{color:var(--t3)}
+.ai-send{width:32px;height:32px;background:var(--terna);border:none;border-radius:var(--r8);color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all var(--tr);flex-shrink:0}
+.ai-send:hover{filter:brightness(1.1)}
+
+/* EXPORT FOOTER */
+.tfoot{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--b1);background:var(--s2);border-radius:0 0 var(--r16) var(--r16)}
+.tfoot-info{font-family:var(--font-m);font-size:11px;color:var(--t3)}
+.exp-btns{display:flex;gap:6px}
+.exp-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--b2);border-radius:var(--r8);background:transparent;color:var(--t2);font-family:var(--font-m);font-size:11px;cursor:pointer;transition:all var(--tr)}
+.exp-btn:hover{background:var(--s1);color:var(--t1)}
+.exp-btn.primary{background:var(--terna);border-color:transparent;color:#fff}
+
+/* CHART WRAP */
+.chart-wrap{position:relative;width:100%;display:block}
+.chart-wrap canvas{display:block;width:100%!important}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="energyhub.html" class="sb-logo">
+    <div class="sb-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <span class="sb-logo-name">Energy<em>Hub</em></span>
+  </a>
+  <div class="sb-sec">Principale</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="dashboard.html"><span class="sb-ico">⚡</span>Dashboard</a></li>
+    <li><a class="sb-item" href="pun.html"><span class="sb-ico">📈</span>Prezzi PUN</a></li>
+    <li><a class="sb-item" href="psv.html"><span class="sb-ico">🔵</span>PSV Gas</a></li>
+    <li><a class="sb-item" href="forecast.html"><span class="sb-ico">🤖</span>Forecast AI<span class="sb-badge">New</span></a></li>
+  </ul>
+  <div class="sb-sec">Mercati</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item active" href="#"><span class="sb-ico">📊</span>Capacity Market</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🔄</span>Dispacciamento</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🌍</span>TTF / CO₂</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📉</span>Fondamentali</a></li>
+  </ul>
+  <div class="sb-sec">Strumenti</div>
+  <ul class="sb-nav">
+    <li><a class="sb-item" href="#"><span class="sb-ico">📋</span>Oneri ARERA</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">🔌</span>CTE Calculator</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">💡</span>Comparatore</a></li>
+    <li><a class="sb-item" href="#"><span class="sb-ico">📰</span>News<span class="sb-badge o">4</span></a></li>
+  </ul>
+  <div class="sb-bottom">
+    <button class="sb-theme-btn" id="themeToggle"><span id="themeIcon">☀️</span><span id="themeLabel">Tema Chiaro</span></button>
+    <div class="sb-user" onclick="toggleUserMenu()" style="cursor:pointer">
+      <div class="sb-avatar" id="sbAvatar">DU</div>
+      <div><div class="sb-user-name" id="sbUserName">Demo User</div><div class="sb-user-plan" id="sbUserPlan">PRO · attivo</div></div>
+      <span style="margin-left:auto;color:var(--t3);font-size:11px">⌄</span>
+    </div>
+    <div id="userMenu" style="display:none;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r8);padding:4px;margin:4px 0 0">
+      <div onclick="logout()" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r4);font-size:13px;color:#F43F5E;cursor:pointer" onmouseover="this.style.background='var(--s3)'" onmouseout="this.style.background=''">🚪 Disconnetti</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">
+        <a href="energyhub.html">EnergyHub</a><span class="bc-sep">/</span>
+        <a href="dashboard.html">Dashboard</a><span class="bc-sep">/</span>
+        <span style="color:var(--t1);font-weight:500">Capacity Market</span>
+      </div>
+      <div class="live-chip"><div class="ldot"></div>Terna · Aggiornato oggi</div>
+    </div>
+    <div class="topbar-right">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--t2)" id="currentDate"></span>
+      <button class="tb-btn" onclick="exportCSV()">⬇ CSV</button>
+      <button class="tb-btn" onclick="exportExcel()">⬇ Excel</button>
+      <button class="tb-btn primary" onclick="askAI('Fornisci un\'analisi completa del Capacity Market italiano: risultati aste recenti, prezzi, volumi aggiudicati e outlook.')">✦ Analisi AI</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--terna)"></div>PREZZO CLEARING</div>
+        <div class="kpi-val">33<span style="font-size:16px;font-weight:600">.0</span></div>
+        <div class="kpi-unit">€/MW/anno · 2027</div>
+        <div class="kpi-delta dn">▼ −12% vs asta 2026</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--green)"></div>CAPACITÀ AGGIUDICATA</div>
+        <div class="kpi-val">43<span style="font-size:16px;font-weight:600">.2</span></div>
+        <div class="kpi-unit">GW totali</div>
+        <div class="kpi-delta up">▲ +2.1 GW vs 2026</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--accent)"></div>CONTRATTI ATTIVI</div>
+        <div class="kpi-val">1<span style="font-size:16px;font-weight:600">,847</span></div>
+        <div class="kpi-unit">unità abilitate</div>
+        <div class="kpi-delta up">▲ +124 nuove</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--purple)"></div>CAPACITÀ ESTERA</div>
+        <div class="kpi-val">3<span style="font-size:16px;font-weight:600">.8</span></div>
+        <div class="kpi-unit">GW · interconnessioni</div>
+        <div class="kpi-delta up">▲ +0.4 GW</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl"><div class="kpi-dot" style="background:var(--orange)"></div>PROSSIMA ASTA</div>
+        <div class="kpi-val" style="font-size:16px">Giu 2025</div>
+        <div class="kpi-unit">Anno consegna 2029</div>
+        <div class="kpi-delta neu">→ 78 giorni</div>
+      </div>
+    </div>
+
+    <!-- Aste panoramica -->
+    <div class="panel">
+      <div class="ph">
+        <div><div class="ph-title">Aste Capacity Market — Panoramica</div><div class="ph-sub">Clicca un'asta per vedere i dettagli · Fonte: Terna</div></div>
+        <div style="display:flex;gap:6px">
+          <button class="p-btn on" id="vAll" onclick="filterAste(this,'all')">Tutte</button>
+          <button class="p-btn" id="vConc" onclick="filterAste(this,'conclusa')">Concluse</button>
+          <button class="p-btn" id="vProg" onclick="filterAste(this,'programmata')">Programmate</button>
+        </div>
+      </div>
+      <div class="asta-grid" id="astaGrid"></div>
+    </div>
+
+    <!-- Detail section (shown on click) -->
+    <div class="detail-section" id="detailSection">
+
+      <!-- Tabs + title -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:var(--font-h);font-size:16px;font-weight:800;color:var(--t1);letter-spacing:-0.3px" id="detailTitle">Asta 2024 — Anno di consegna 2027</div>
+          <div style="font-family:var(--font-m);font-size:11.5px;color:var(--t2);margin-top:2px" id="detailSub">Dati definitivi · Approvati ARERA</div>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab(this,'risultati')">Risultati</button>
+          <button class="tab-btn" onclick="switchTab(this,'tecnologie')">Tecnologie</button>
+          <button class="tab-btn" onclick="switchTab(this,'zone')">Zone</button>
+          <button class="tab-btn" onclick="switchTab(this,'timeline')">Timeline</button>
+        </div>
+      </div>
+
+      <!-- TAB: Risultati -->
+      <div id="tab-risultati">
+        <div class="col-2-1" style="gap:16px">
+          <!-- Chart prezzi storici -->
+          <div class="panel">
+            <div class="ph">
+              <div><div class="ph-title">Prezzi Clearing Storici</div><div class="ph-sub">€/MW/anno · tutte le aste</div></div>
+              <button class="p-btn on" id="chartTypeBtn" onclick="toggleChartType(this)">Barre</button>
+            </div>
+            <div style="padding:16px 18px 14px">
+              <div class="chart-wrap" style="height:220px"><canvas id="prezziChart" style="height:220px!important"></canvas></div>
+            </div>
+          </div>
+          <!-- Volumi chart -->
+          <div class="panel">
+            <div class="ph">
+              <div><div class="ph-title">Capacità Aggiudicata</div><div class="ph-sub">GW per anno · nuova vs esistente</div></div>
+              <button class="p-btn" onclick="askAI('Analizza il trend della capacità aggiudicata nelle aste italiane: cosa indicano i volumi?')">✦ AI</button>
+            </div>
+            <div style="padding:16px 18px 14px">
+              <div class="chart-wrap" style="height:220px"><canvas id="volChart" style="height:220px!important"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risultati table -->
+        <div class="panel">
+          <div class="ph">
+            <div><div class="ph-title" id="rTableTitle">Risultati Asta 2024 (Consegna 2027)</div><div class="ph-sub">Top aggiudicatari per capacità</div></div>
+            <button class="p-btn" onclick="askAI('Chi sono i principali aggiudicatari del Capacity Market italiano 2027 e quale tecnologia ha prevalso?')">✦ AI</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="cap-table">
+              <thead><tr>
+                <th>#</th><th>Unità / Impianto</th><th>Tecnologia</th><th>Zona</th>
+                <th>MW aggiudicati</th><th>Prezzo</th><th>Tipo</th><th>Scadenza contratto</th>
+              </tr></thead>
+              <tbody id="resultsTableBody"></tbody>
+            </table>
+          </div>
+          <div class="tfoot">
+            <span class="tfoot-info" id="rTableInfo">Mostrando 15 contratti principali</span>
+            <div class="exp-btns">
+              <button class="exp-btn" onclick="exportCSV()">⬇ CSV</button>
+              <button class="exp-btn" onclick="exportExcel()">⬇ Excel</button>
+              <button class="exp-btn primary" onclick="exportCSV('full')">⬇ Export Completo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Tecnologie -->
+      <div id="tab-tecnologie" style="display:none">
+        <div class="two-col">
+          <div class="panel">
+            <div class="ph"><div><div class="ph-title">Mix Tecnologico</div><div class="ph-sub">% capacità aggiudicata per fonte</div></div><button class="p-btn" onclick="askAI('Analizza il mix tecnologico del Capacity Market 2027: quali tecnologie hanno prevalso e perché?')">✦ AI</button></div>
+            <div style="padding:16px 18px 14px">
+              <div class="chart-wrap" style="height:260px"><canvas id="techChart" style="height:260px!important"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><div><div class="ph-title">Dettaglio per Tecnologia</div><div class="ph-sub">MW, prezzo medio, contratti</div></div></div>
+            <div style="overflow-x:auto"><table class="cap-table" id="techTable">
+              <thead><tr><th>Tecnologia</th><th>MW totali</th><th>% del totale</th><th>Prezzo medio</th><th>N. contratti</th></tr></thead>
+              <tbody id="techTableBody"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Zone -->
+      <div id="tab-zone" style="display:none">
+        <div class="panel">
+          <div class="ph"><div><div class="ph-title">Capacità per Zona di Mercato</div><div class="ph-sub">MW aggiudicati e prezzo zonale · Terna</div></div><button class="p-btn" onclick="askAI('Analizza la distribuzione zonale del Capacity Market italiano: quali zone hanno maggiore necessità di capacità?')">✦ AI</button></div>
+          <div class="zone-grid" id="zoneGrid"></div>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="ph"><div><div class="ph-title">Prezzi Zonali</div><div class="ph-sub">€/MW/anno per zona</div></div></div>
+            <div style="padding:16px 18px 14px">
+              <div class="chart-wrap" style="height:220px"><canvas id="zoneChart" style="height:220px!important"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><div><div class="ph-title">Capacità Estera</div><div class="ph-sub">GW per interconnessione</div></div></div>
+            <div style="padding:16px 18px 14px">
+              <div class="chart-wrap" style="height:220px"><canvas id="foreChart" style="height:220px!important"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Timeline -->
+      <div id="tab-timeline" style="display:none">
+        <div class="two-col">
+          <div class="panel">
+            <div class="ph"><div><div class="ph-title">Calendario Aste 2025–2030</div><div class="ph-sub">Prossime scadenze Terna</div></div></div>
+            <div class="timeline" id="timelineList"></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><div><div class="ph-title">Fasi Procedura d'Asta</div><div class="ph-sub">Iter corrente · Asta 2025 (consegna 2029)</div></div></div>
+            <div class="timeline" id="phasesList"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /detail -->
+
+    <!-- AI Box -->
+    <div class="ai-box">
+      <div class="ai-box-head">
+        <div class="ai-box-title"><span>✦</span> Analisi AI Capacity Market</div>
+        <div class="ai-chip"><div class="ldot"></div>Claude · Esperto mercato elettrico IT</div>
+      </div>
+      <div class="ai-body">
+        <div class="ai-resp" id="aiResp">
+          <div style="display:none;align-items:center;gap:6px" id="aiLoad"><div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>
+          Clicca una domanda rapida o scrivi la tua per analizzare il Capacity Market italiano con l'AI.
+        </div>
+        <div class="ai-qs">
+          <div class="ai-qs-lbl">Chiedi all'AI</div>
+          <button class="ai-q" onclick="askAI('Il prezzo clearing a 33 €/MW/anno è alto o basso rispetto agli altri paesi europei? Analizza il contesto.')">💶 Prezzi EU a confronto</button>
+          <button class="ai-q" onclick="askAI('Quali tecnologie hanno maggiori probabilità di aggiudicarsi capacità nelle prossime aste italiane? Analizza trend rinnovabili vs gas.')">🔋 Tecnologie favorite prossime aste</button>
+          <button class="ai-q" onclick="askAI('Come funziona il meccanismo di prezzo del Capacity Market italiano? Spiega il metodo Vickrey e il prezzo marginale.')">⚙️ Come funziona il prezzo clearing</button>
+          <button class="ai-q" onclick="askAI('Analizza il rischio per i produttori nel Capacity Market: quando può essere ritirato un contratto e quali sanzioni esistono?')">⚠️ Rischi per i produttori</button>
+          <div class="ai-input-row">
+            <input class="ai-input" id="aiCustom" placeholder="Scrivi la tua domanda…" onkeydown="if(event.key==='Enter')sendCustom()">
+            <button class="ai-send" onclick="sendCustom()">↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+/* ══ AUTH (DEMO MODE) ══ */
+(function(){
+  const s=JSON.parse(localStorage.getItem('eh_session')||sessionStorage.getItem('eh_session')||'null')||{nome:'Demo',cognome:'User',initials:'DU',plan:'pro'};
+  const av=document.getElementById('sbAvatar');
+  const nm=document.getElementById('sbUserName');
+  const pl=document.getElementById('sbUserPlan');
+  if(av)av.textContent=s.initials||(s.nome||'D')[0].toUpperCase();
+  if(nm)nm.textContent=(s.nome||'Demo')+' '+(s.cognome||'User');
+  if(pl)pl.textContent=(s.plan||'pro').toUpperCase()+' · attivo';
+})();
+function toggleUserMenu(){const m=document.getElementById('userMenu');if(m)m.style.display=m.style.display==='none'?'block':'none';}
+function logout(){localStorage.removeItem('eh_session');sessionStorage.removeItem('eh_session');window.location.href='login.html';}
+
+/* ══ THEME ══ */
+const root=document.documentElement;
+const saved=localStorage.getItem('eh-theme')||'dark';
+root.setAttribute('data-theme',saved);
+updateThemeBtn();
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const n=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',n);localStorage.setItem('eh-theme',n);
+  updateThemeBtn();setTimeout(rebuildCharts,50);
+});
+function updateThemeBtn(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  document.getElementById('themeIcon').textContent=dark?'☀️':'🌙';
+  document.getElementById('themeLabel').textContent=dark?'Tema Chiaro':'Tema Scuro';
+}
+document.getElementById('currentDate').textContent=new Date().toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+
+/* ══ DATA ══ */
+const ASTE=[
+  {id:'2024',anno:2027,tipo:'Asta Principale',stato:'conclusa',prezzo:33.0,cap:43.2,contratti:1847,estera:3.8,data:'Nov 2024'},
+  {id:'2023',anno:2026,tipo:'Asta Principale',stato:'conclusa',prezzo:37.5,cap:41.1,contratti:1723,estera:3.4,data:'Nov 2023'},
+  {id:'2022',anno:2025,tipo:'Asta Principale',stato:'conclusa',prezzo:44.2,cap:40.8,contratti:1651,estera:3.1,data:'Nov 2022'},
+  {id:'2021',anno:2024,tipo:'Asta Principale',stato:'conclusa',prezzo:52.0,cap:39.5,contratti:1580,estera:2.9,data:'Nov 2021'},
+  {id:'2020',anno:2023,tipo:'Asta Principale',stato:'conclusa',prezzo:75.0,cap:38.2,contratti:1492,estera:2.6,data:'Dic 2020'},
+  {id:'2025a',anno:2028,tipo:'Asta Principale',stato:'programmata',prezzo:null,cap:null,contratti:null,estera:null,data:'Nov 2025'},
+  {id:'2025d',anno:2029,tipo:'Asta Anticipata',stato:'programmata',prezzo:null,cap:null,contratti:null,estera:null,data:'Giu 2025'},
+  {id:'2025b',anno:2028,tipo:'Asta Secondaria',stato:'programmata',prezzo:null,cap:null,contratti:null,estera:null,data:'Mar 2026'},
+  {id:'2019',anno:2022,tipo:'Asta Principale',stato:'conclusa',prezzo:33.5,cap:36.8,contratti:1380,estera:2.3,data:'Dic 2019'},
+];
+
+const RESULTS=[
+  {n:1,nome:'Enel Produzione — Torrevaldaliga Nord',tech:'CCGT',zona:'CNORD',mw:840,prezzo:33.0,tipo:'Esistente',scad:'2027'},
+  {n:2,nome:'Edison — Centrale Torviscosa',tech:'Ciclo combinato',zona:'NORD',mw:720,prezzo:33.0,tipo:'Esistente',scad:'2027'},
+  {n:3,nome:'Eni Plenitude — Sarmato',tech:'CCGT',zona:'NORD',mw:680,prezzo:33.0,tipo:'Nuova',scad:'2034'},
+  {n:4,nome:'ERG Power — Priolo',tech:'Ciclo combinato',zona:'SUD',mw:620,prezzo:33.0,tipo:'Esistente',scad:'2027'},
+  {n:5,nome:'A2A — Cassano d\'Adda',tech:'CCGT',zona:'NORD',mw:590,prezzo:33.0,tipo:'Esistente',scad:'2027'},
+  {n:6,nome:'Enel Green Power — BESS',tech:'Storage',zona:'SUD',mw:480,prezzo:33.0,tipo:'Nuova',scad:'2031'},
+  {n:7,nome:'Axpo — Import Francia',tech:'Estera (FR)',zona:'NORD',mw:450,prezzo:33.0,tipo:'Estera',scad:'2027'},
+  {n:8,nome:'Falck Renewables — Vento Sud',tech:'Eolico + BESS',zona:'SUD',mw:420,prezzo:33.0,tipo:'Nuova',scad:'2034'},
+  {n:9,nome:'Saras — Sardegna',tech:'Turbina a gas',zona:'SARD',mw:380,prezzo:33.0,tipo:'Esistente',scad:'2027'},
+  {n:10,nome:'Terna — Pompaggio Entracque',tech:'Idro pompaggio',zona:'NORD',mw:350,prezzo:33.0,tipo:'Esistente',scad:'2027'},
+  {n:11,nome:'BKW — Import Svizzera',tech:'Estera (CH)',zona:'NORD',mw:340,prezzo:33.0,tipo:'Estera',scad:'2027'},
+  {n:12,nome:'Enel — Eolico Puglia',tech:'Eolico',zona:'SUD',mw:310,prezzo:33.0,tipo:'Nuova',scad:'2031'},
+  {n:13,nome:'Hera — CHP Bologna',tech:'Cogenerazione',zona:'CNORD',mw:280,prezzo:33.0,tipo:'Esistente',scad:'2027'},
+  {n:14,nome:'Statkraft — DSR Industria',tech:'Demand Response',zona:'NORD',mw:260,prezzo:28.0,tipo:'DSR',scad:'2027'},
+  {n:15,nome:'Eni Plenitude — BESS Sicilia',tech:'Storage',zona:'SICI',mw:240,prezzo:33.0,tipo:'Nuova',scad:'2031'},
+];
+
+const TECH_DATA=[
+  {name:'CCGT / Ciclo combinato',mw:18400,pct:42.6,prezzo:33.0,n:312,color:'#F59E0B'},
+  {name:'Idroelettrico',mw:8200,pct:19.0,prezzo:30.5,n:89,color:'#0EA5E9'},
+  {name:'Storage (BESS)',mw:5100,pct:11.8,prezzo:33.0,n:214,color:'#10B981'},
+  {name:'Eolico',mw:4800,pct:11.1,prezzo:31.5,n:445,color:'#8B5CF6'},
+  {name:'Capacity estera',mw:3800,pct:8.8,prezzo:28.0,n:42,color:'#6080A0'},
+  {name:'Turbine a gas',mw:1900,pct:4.4,prezzo:33.0,n:78,color:'#F97316'},
+  {name:'Demand Response',mw:700,pct:1.6,prezzo:22.0,n:312,color:'#FBBF24'},
+  {name:'Altro',mw:300,pct:0.7,prezzo:25.0,n:355,color:'#5C7499'},
+];
+
+const ZONE_DATA=[
+  {name:'Nord',mw:18200,prezzo:33.0,estera:3.8},
+  {name:'Centro Nord',mw:7800,prezzo:33.0,estera:0},
+  {name:'Centro Sud',mw:4200,prezzo:33.0,estera:0},
+  {name:'Sud',mw:7600,prezzo:33.0,estera:0},
+  {name:'Sicilia',mw:2900,prezzo:36.5,estera:0},
+  {name:'Sardegna',mw:2500,prezzo:35.0,estera:0},
+];
+
+const TIMELINE_DATA=[
+  {data:'Giu 2025',titolo:'Asta anticipata 2029',desc:'Pubblicazione regole e avvio prequalifica',tag:'Programmata',color:'#F59E0B',future:true},
+  {data:'Nov 2025',titolo:'Asta principale 2028',desc:'Prequalifica aperta · 44 GW atteso',tag:'Programmata',color:'#6080A0',future:true},
+  {data:'Mar 2026',titolo:'Asta secondaria 2028',desc:'Integrazione offerte residue',tag:'Programmata',color:'#6080A0',future:true},
+  {data:'Nov 2026',titolo:'Asta principale 2029',desc:'Anno di consegna T+3',tag:'Pianificata',color:'#6080A0',future:true},
+  {data:'Nov 2027',titolo:'Asta principale 2030',desc:'Prima asta con obiettivi REPowerEU',tag:'Pianificata',color:'#6080A0',future:true},
+];
+
+const PHASES_DATA=[
+  {data:'Feb 2025',titolo:'Apertura prequalifica',desc:'Invio documentazione tecnica e finanziaria a Terna',tag:'Completata',color:'#10B981',future:false},
+  {data:'Apr 2025',titolo:'Esito prequalifica',desc:'Pubblicazione lista operatori ammessi',tag:'Completata',color:'#10B981',future:false},
+  {data:'Giu 2025',titolo:'Offerte d\'asta',desc:'Presentazione offerte di prezzo e quantità',tag:'In corso',color:'#F59E0B',future:false},
+  {data:'Lug 2025',titolo:'Aggiudicazione',desc:'Calcolo prezzo clearing e contratti',tag:'Attesa',color:'#6080A0',future:true},
+  {data:'Set 2025',titolo:'Contratti firmati',desc:'Sottoscrizione accordi con Terna',tag:'Attesa',color:'#6080A0',future:true},
+  {data:'Gen 2029',titolo:'Inizio consegna',desc:'Periodo di disponibilità capacità',tag:'Attesa',color:'#6080A0',future:true},
+];
+
+/* ══ ASTE GRID ══ */
+let filterState='all', selectedAsta='2024';
+
+function buildAsteGrid(){
+  const filtered=ASTE.filter(a=>filterState==='all'||a.stato===filterState);
+  document.getElementById('astaGrid').innerHTML=filtered.map(a=>`
+    <div class="asta-card stato-${a.stato} ${a.id===selectedAsta?'active-card':''}" onclick="selectAsta('${a.id}')">
+      <div class="ac-header">
+        <div class="ac-anno">Consegna ${a.anno}</div>
+        <div class="ac-stato ${a.stato}">${a.stato==='conclusa'?'Conclusa':a.stato==='in-corso'?'In corso':'Programmata'}</div>
+      </div>
+      <div class="ac-tipo">${a.tipo} · ${a.data}</div>
+      ${a.prezzo!=null?`
+        <div class="ac-prezzo">${a.prezzo.toFixed(1)}</div>
+        <div class="ac-prezzo-lbl">€/MW/anno · clearing</div>
+        <div class="ac-stats">
+          <div><div class="ac-stat-val">${a.cap} GW</div><div class="ac-stat-lbl">Capacità</div></div>
+          <div><div class="ac-stat-val">${a.contratti.toLocaleString()}</div><div class="ac-stat-lbl">Contratti</div></div>
+        </div>`:`
+        <div style="margin-top:10px;font-family:var(--font-m);font-size:12px;color:var(--t3)">Data prevista: ${a.data}</div>
+        <div style="font-family:var(--font-m);font-size:11px;color:var(--t3);margin-top:4px">Regole in definizione</div>`
+      }
+    </div>`).join('');
+}
+
+function filterAste(btn,f){
+  filterState=f;
+  document.querySelectorAll('#vAll,#vConc,#vProg').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  buildAsteGrid();
+}
+
+function selectAsta(id){
+  selectedAsta=id;
+  buildAsteGrid();
+  const asta=ASTE.find(a=>a.id===id);
+  if(asta.stato==='programmata'){
+    document.getElementById('detailSection').classList.remove('show');
+    return;
+  }
+  document.getElementById('detailSection').classList.add('show');
+  document.getElementById('detailTitle').textContent=`Asta ${asta.data} — Anno di consegna ${asta.anno}`;
+  document.getElementById('rTableTitle').textContent=`Risultati Asta ${asta.data} (Consegna ${asta.anno})`;
+  buildResultsTable();
+  rebuildCharts();
+}
+
+/* ══ RESULTS TABLE ══ */
+function buildResultsTable(){
+  document.getElementById('resultsTableBody').innerHTML=RESULTS.map(r=>{
+    const tipoCls=r.tipo==='Nuova'?'cb-new':r.tipo==='Esistente'?'cb-exist':r.tipo==='Estera'?'cb-foreign':'cb-dsr';
+    return`<tr>
+      <td style="font-family:var(--font-m);font-size:11px;color:var(--t3)">${r.n}</td>
+      <td class="ct-name">${r.nome}</td>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--t2)">${r.tech}</td>
+      <td class="ct-terna">${r.zona}</td>
+      <td class="ct-val">${r.mw.toLocaleString()} MW</td>
+      <td class="ct-terna">${r.prezzo.toFixed(1)} €/MW</td>
+      <td><span class="cap-badge ${tipoCls}">${r.tipo}</span></td>
+      <td style="font-family:var(--font-m);font-size:11.5px;color:var(--t3)">${r.scad}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══ TECH TABLE ══ */
+function buildTechTable(){
+  document.getElementById('techTableBody').innerHTML=TECH_DATA.map(t=>`
+    <tr>
+      <td style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--t1)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${t.color}"></span>${t.name}</td>
+      <td class="ct-val">${t.mw.toLocaleString()}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden"><div style="width:${t.pct/42.6*100}%;height:100%;background:${t.color};border-radius:2px"></div></div><span style="font-family:var(--font-m);font-size:11px;color:var(--t2);white-space:nowrap">${t.pct}%</span></div></td>
+      <td class="ct-terna">${t.prezzo.toFixed(1)} €/MW</td>
+      <td style="font-family:var(--font-m);font-size:12px;color:var(--t2)">${t.n.toLocaleString()}</td>
+    </tr>`).join('');
+}
+
+/* ══ ZONE GRID ══ */
+function buildZoneGrid(){
+  const max=Math.max(...ZONE_DATA.map(z=>z.mw));
+  document.getElementById('zoneGrid').innerHTML=ZONE_DATA.map(z=>`
+    <div class="zona-card">
+      <div class="zona-name">${z.name}</div>
+      <div class="zona-mw">${z.mw.toLocaleString()} <span style="font-size:11px;font-weight:400;color:var(--t3)">MW</span></div>
+      <div class="zona-prezzo">${z.prezzo.toFixed(1)} €/MW/anno</div>
+      ${z.estera>0?`<div style="font-family:var(--font-m);font-size:10px;color:var(--purple);margin-top:2px">+ ${z.estera} GW estera</div>`:''}
+      <div class="zona-bar"><div class="zona-bar-inner" style="width:${z.mw/max*100}%"></div></div>
+    </div>`).join('');
+}
+
+/* ══ TIMELINE ══ */
+function buildTimeline(){
+  document.getElementById('timelineList').innerHTML=TIMELINE_DATA.map((t,i)=>`
+    <div class="tl-item">
+      <div class="tl-left">
+        <div class="tl-dot" style="background:${t.color}"></div>
+        ${i<TIMELINE_DATA.length-1?'<div class="tl-line"></div>':''}
+        <div class="tl-date">${t.data}</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-title">${t.titolo}</div>
+        <div class="tl-desc">${t.desc}</div>
+        <span class="tl-tag">${t.tag}</span>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('phasesList').innerHTML=PHASES_DATA.map((t,i)=>`
+    <div class="tl-item">
+      <div class="tl-left">
+        <div class="tl-dot" style="background:${t.color}"></div>
+        ${i<PHASES_DATA.length-1?'<div class="tl-line"></div>':''}
+        <div class="tl-date">${t.data}</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-title">${t.titolo}</div>
+        <div class="tl-desc">${t.desc}</div>
+        <span class="tl-tag" style="background:${t.color==='#10B981'?'rgba(16,185,129,0.12)':t.color==='#F59E0B'?'rgba(245,158,11,0.12)':'rgba(96,128,160,0.12)'};color:${t.color};border-color:${t.color}40">${t.tag}</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ══ CHARTS ══ */
+let prezziChartInst=null,volChartInst=null,techChartInst=null,zoneChartInst=null,foreChartInst=null;
+let chartType='bar';
+
+function cd(){
+  const dark=root.getAttribute('data-theme')==='dark';
+  return{
+    grid:dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)',
+    tick:dark?'#6080A0':'#2D4A66',
+    tipBg:dark?'#131A24':'#FFFFFF',
+    tipBord:dark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.13)',
+    tipText:dark?'#F0F4FA':'#0B1929',
+  };
+}
+
+function buildPrezziChart(){
+  const ctx=document.getElementById('prezziChart').getContext('2d');
+  const c=cd();
+  const concluse=ASTE.filter(a=>a.stato==='conclusa').sort((a,b)=>a.anno-b.anno);
+  const labels=concluse.map(a=>`${a.anno}`);
+  const data=concluse.map(a=>a.prezzo);
+  const colors=data.map((v,i)=>i===data.length-1?'#F59E0B':'rgba(245,158,11,0.45)');
+
+  prezziChartInst=new Chart(ctx,{
+    type:chartType,
+    data:{labels,datasets:[{
+      label:'Prezzo clearing (€/MW/anno)',
+      data,
+      backgroundColor:chartType==='bar'?colors:'transparent',
+      borderColor:'#F59E0B',borderWidth:chartType==='line'?2:0,
+      borderRadius:chartType==='bar'?4:0,
+      tension:0.3,fill:chartType==='line',
+      pointRadius:chartType==='line'?4:0,
+      pointBackgroundColor:'#F59E0B',
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,
+        titleColor:c.tipText,bodyColor:c.tick,
+        titleFont:{family:"'Plus Jakarta Sans'",size:12,weight:'700'},
+        bodyFont:{family:"'JetBrains Mono'",size:11},padding:10,cornerRadius:8,
+        callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)} €/MW/anno`}
+      }},
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10}}},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},callback:v=>`${v}€`},position:'right'}
+      }
+    }
+  });
+}
+
+function buildVolChart(){
+  const ctx=document.getElementById('volChart').getContext('2d');
+  const c=cd();
+  const concluse=ASTE.filter(a=>a.stato==='conclusa').sort((a,b)=>a.anno-b.anno);
+  volChartInst=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:concluse.map(a=>`${a.anno}`),
+      datasets:[
+        {label:'Capacità nazionale',data:concluse.map(a=>+(a.cap-a.estera).toFixed(1)),backgroundColor:'rgba(14,165,233,0.7)',borderRadius:3,stack:'s'},
+        {label:'Capacità estera',data:concluse.map(a=>a.estera),backgroundColor:'rgba(139,92,246,0.7)',borderRadius:3,stack:'s'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},boxWidth:10,boxHeight:10}},
+        tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,padding:8,cornerRadius:8,titleFont:{family:"'Plus Jakarta Sans'",size:11},bodyFont:{family:"'JetBrains Mono'",size:10}}},
+      scales:{
+        x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10}},stacked:true},
+        y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},callback:v=>`${v} GW`},stacked:true,position:'right'}
+      }
+    }
+  });
+}
+
+function buildTechChart(){
+  const ctx=document.getElementById('techChart').getContext('2d');
+  techChartInst=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:TECH_DATA.map(t=>t.name),datasets:[{data:TECH_DATA.map(t=>t.pct),backgroundColor:TECH_DATA.map(t=>t.color),borderWidth:2,borderColor:root.getAttribute('data-theme')==='dark'?'#0D1117':'#fff',hoverOffset:6}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{display:true,position:'right',labels:{color:cd().tick,font:{family:"'JetBrains Mono'",size:10},boxWidth:10,boxHeight:10,padding:8}},
+        tooltip:{backgroundColor:cd().tipBg,borderColor:cd().tipBord,borderWidth:1,titleColor:cd().tipText,bodyColor:cd().tick,padding:8,cornerRadius:8,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}%`}}}
+    }
+  });
+}
+
+function buildZoneChart(){
+  const ctx=document.getElementById('zoneChart').getContext('2d');
+  const c=cd();
+  zoneChartInst=new Chart(ctx,{
+    type:'bar',
+    data:{labels:ZONE_DATA.map(z=>z.name),datasets:[{label:'Prezzo (€/MW/anno)',data:ZONE_DATA.map(z=>z.prezzo),backgroundColor:ZONE_DATA.map(z=>z.prezzo>33?'rgba(245,158,11,0.8)':'rgba(14,165,233,0.6)'),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,padding:8,cornerRadius:8,callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)} €/MW/anno`}}},
+      scales:{x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10}}},y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},callback:v=>`${v}€`},position:'right',min:25,max:40}}
+    }
+  });
+}
+
+function buildForeChart(){
+  const ctx=document.getElementById('foreChart').getContext('2d');
+  const c=cd();
+  const data=[{name:'FR',gw:1.8},{name:'CH',gw:0.9},{name:'AT',gw:0.6},{name:'SL',gw:0.3},{name:'GR',gw:0.2}];
+  foreChartInst=new Chart(ctx,{
+    type:'bar',
+    data:{labels:data.map(d=>d.name),datasets:[{label:'GW aggiudicati',data:data.map(d=>d.gw),backgroundColor:'rgba(139,92,246,0.7)',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{backgroundColor:c.tipBg,borderColor:c.tipBord,borderWidth:1,titleColor:c.tipText,bodyColor:c.tick,padding:8,cornerRadius:8,callbacks:{label:ctx=>` ${ctx.parsed.x.toFixed(1)} GW`}}},
+      scales:{x:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10},callback:v=>`${v} GW`}},y:{grid:{color:c.grid,drawBorder:false},ticks:{color:c.tick,font:{family:"'JetBrains Mono'",size:10}}}}
+    }
+  });
+}
+
+function rebuildCharts(){
+  [prezziChartInst,volChartInst,techChartInst,zoneChartInst,foreChartInst].forEach(c=>{if(c)c.destroy();});
+  buildPrezziChart();buildVolChart();
+  if(document.getElementById('tab-tecnologie').style.display!=='none'){buildTechChart();buildTechTable();}
+  if(document.getElementById('tab-zone').style.display!=='none'){buildZoneChart();buildForeChart();buildZoneGrid();}
+}
+
+function toggleChartType(btn){
+  chartType=chartType==='bar'?'line':'bar';
+  btn.textContent=chartType==='bar'?'Barre':'Linea';
+  btn.classList.toggle('on',chartType==='line');
+  if(prezziChartInst)prezziChartInst.destroy();
+  buildPrezziChart();
+}
+
+/* ══ TABS ══ */
+const TABS=['risultati','tecnologie','zone','timeline'];
+function switchTab(btn,tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  TABS.forEach(t=>{document.getElementById('tab-'+t).style.display=t===tab?'block':'none';});
+  if(tab==='tecnologie'){if(!techChartInst){buildTechChart();buildTechTable();}}
+  if(tab==='zone'){buildZoneGrid();buildZoneChart();buildForeChart();}
+  if(tab==='timeline'){buildTimeline();}
+}
+
+/* ══ EXPORT ══ */
+function exportCSV(mode='partial'){
+  let csv='Impianto,Tecnologia,Zona,MW,Prezzo (€/MW),Tipo,Scadenza\n';
+  RESULTS.forEach(r=>{csv+=`${r.nome},${r.tech},${r.zona},${r.mw},${r.prezzo},${r.tipo},${r.scad}\n`;});
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`capacity_market_2027_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+function exportExcel(){
+  let tsv='Impianto\tTecnologia\tZona\tMW\tPrezzo €/MW\tTipo\tScadenza\n';
+  RESULTS.forEach(r=>{tsv+=`${r.nome}\t${r.tech}\t${r.zona}\t${r.mw}\t${r.prezzo}\t${r.tipo}\t${r.scad}\n`;});
+  const blob=new Blob(["\uFEFF"+tsv],{type:'application/vnd.ms-excel'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`capacity_market_2027_${new Date().toISOString().slice(0,10)}.xls`;a.click();
+}
+
+/* ══ AI ══ */
+async function askAI(prompt){
+  const resp=document.getElementById('aiResp');
+  const load=document.getElementById('aiLoad');
+  load.style.display='flex';resp.innerHTML='';resp.appendChild(load);load.style.display='flex';
+
+  const system=`Sei un esperto del Capacity Market italiano e del mercato elettrico. Rispondi in italiano, preciso, max 5 frasi.
+Dati attuali Capacity Market IT:
+- Asta 2024 (consegna 2027): clearing 33.0 €/MW/anno, 43.2 GW aggiudicati, 1847 contratti
+- Asta 2023 (consegna 2026): clearing 37.5 €/MW/anno, 41.1 GW
+- Asta 2022 (consegna 2025): clearing 44.2 €/MW/anno, 40.8 GW
+- Tecnologia prevalente: CCGT 42.6%, Idro 19%, Storage 11.8%, Eolico 11.1%
+- Capacità estera: 3.8 GW (Francia 1.8, Svizzera 0.9, Austria 0.6)
+- Prossima asta: Giugno 2025 (consegna 2029)
+Usa **grassetto** per dati chiave. Usa \`backtick\` per valori numerici.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,system,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    load.style.display='none';
+    const text=data.content?.[0]?.text||'Risposta non disponibile.';
+    resp.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<span class="hl">$1</span>').replace(/\n/g,'<br>');
+  }catch(e){
+    load.style.display='none';
+    resp.innerHTML='⚠️ Errore di connessione.';
+  }
+}
+function sendCustom(){
+  const i=document.getElementById('aiCustom');
+  const q=i.value.trim();if(!q)return;
+  askAI(q);i.value='';
+}
+
+/* ══ INIT ══ */
+buildAsteGrid();
+selectAsta('2024');
+</script>
+</body>
+</html>
